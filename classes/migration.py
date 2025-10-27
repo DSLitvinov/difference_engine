@@ -4,6 +4,7 @@ Migration utilities for Difference Engine addon
 import os
 import json
 import logging
+import shutil
 from typing import List, Dict, Any
 
 # Setup logging
@@ -15,6 +16,126 @@ _migration_cache = {}
 
 class DFM_Migration:
     """Handles migration of data structures between versions"""
+    
+    # Current data format version
+    CURRENT_VERSION = "1.1"
+    
+    @staticmethod
+    def get_data_version(commit_dir: str) -> str:
+        """Get data version from commit.json file"""
+        try:
+            commit_file = os.path.join(commit_dir, "commit.json")
+            if os.path.exists(commit_file):
+                with open(commit_file, 'r') as f:
+                    data = json.load(f)
+                    return data.get('data_version', '1.0')
+        except Exception as e:
+            logger.debug(f"Failed to read version from {commit_dir}: {e}")
+        return '1.0'  # Default to oldest version
+    
+    @staticmethod
+    def migrate_commit_data_format(commit_dir: str) -> bool:
+        """
+        Migrate commit data format to current version.
+        
+        Args:
+            commit_dir: Directory containing commit data
+            
+        Returns:
+            True if migration successful, False otherwise
+        """
+        try:
+            commit_file = os.path.join(commit_dir, "commit.json")
+            if not os.path.exists(commit_file):
+                return True
+            
+            with open(commit_file, 'r') as f:
+                data = json.load(f)
+            
+            current_version = data.get('data_version', '1.0')
+            
+            # No migration needed if already at current version
+            if current_version == DFM_Migration.CURRENT_VERSION:
+                return True
+            
+            logger.info(f"Migrating commit from version {current_version} to {DFM_Migration.CURRENT_VERSION}")
+            
+            # Backup original
+            backup_file = commit_file + '.backup'
+            if not os.path.exists(backup_file):
+                shutil.copy2(commit_file, backup_file)
+            
+            # Update to current version
+            data['data_version'] = DFM_Migration.CURRENT_VERSION
+            
+            # Add any missing required fields with defaults
+            if 'exported_components' not in data:
+                data['exported_components'] = {
+                    'geometry': True,
+                    'transform': True,
+                    'materials': True,
+                    'uv_layout': True
+                }
+            
+            # Save migrated data
+            with open(commit_file, 'w') as f:
+                json.dump(data, f, indent=2)
+            
+            logger.info(f"Successfully migrated commit: {commit_dir}")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Failed to migrate commit data: {e}")
+            return False
+    
+    @staticmethod
+    def migrate_all_commits(base_dir: str) -> bool:
+        """
+        Migrate all commits in all branches to current data format.
+        
+        Args:
+            base_dir: Base directory of difference machine data
+            
+        Returns:
+            True if migration successful, False otherwise
+        """
+        try:
+            if not os.path.exists(base_dir):
+                return True
+            
+            migrated_count = 0
+            failed_count = 0
+            
+            for mesh_name in os.listdir(base_dir):
+                mesh_dir = os.path.join(base_dir, mesh_name)
+                if not os.path.isdir(mesh_dir):
+                    continue
+                
+                for branch_name in os.listdir(mesh_dir):
+                    branch_dir = os.path.join(mesh_dir, branch_name)
+                    if not os.path.isdir(branch_dir) or branch_name == '.backup':
+                        continue
+                    
+                    for commit_name in os.listdir(branch_dir):
+                        commit_dir = os.path.join(branch_dir, commit_name)
+                        if not os.path.isdir(commit_dir):
+                            continue
+                        
+                        try:
+                            if DFM_Migration.migrate_commit_data_format(commit_dir):
+                                migrated_count += 1
+                            else:
+                                failed_count += 1
+                        except Exception as e:
+                            logger.error(f"Failed to migrate {commit_dir}: {e}")
+                            failed_count += 1
+            
+            logger.info(f"Migration completed: {migrated_count} succeeded, {failed_count} failed")
+            return failed_count == 0
+            
+        except Exception as e:
+            logger.error(f"Failed to migrate commits: {e}")
+            return False
     
     @staticmethod
     def migrate_commit_indexes_to_branches(base_dir: str) -> bool:

@@ -143,9 +143,25 @@ def validate_file_path(file_path: str, must_exist: bool = False, must_be_file: b
         logger.error("File path is None or not a string")
         return False
     
-    # Check for path traversal attempts
-    if '..' in file_path or file_path.startswith('/'):
+    # Check for path traversal attempts - prevent relative paths
+    if '..' in file_path:
         logger.error(f"Potentially dangerous path detected: {file_path}")
+        return False
+    
+    # Prevent absolute paths
+    if os.path.isabs(file_path):
+        logger.error(f"Absolute path not allowed: {file_path}")
+        return False
+    
+    # Check for leading path separators and relative components
+    normalized = os.path.normpath(file_path)
+    if normalized != file_path and file_path.lstrip('.' + os.sep) != file_path:
+        logger.error(f"Path contains relative components: {file_path}")
+        return False
+    
+    # Prevent backslash manipulation on Windows
+    if '\\' in file_path and os.sep != '\\':
+        logger.error(f"Invalid path separator detected: {file_path}")
         return False
     
     # Check path length

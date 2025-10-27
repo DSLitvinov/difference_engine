@@ -5,33 +5,14 @@ import bpy
 import json
 import os
 import logging
-import math
+import time
 from datetime import datetime
 from ..material_exporter import DFM_MaterialExporter
 from ..version_manager import DFM_VersionManager
-from ..utils import sanitize_path_component, safe_float
+from ..utils import sanitize_path_component, safe_float, safe_vector3
 
 # Setup logging
 logger = logging.getLogger(__name__)
-
-
-def safe_vector3(vec):
-    """
-    Convert 3D vector to list with safe floats in one batch operation.
-    
-    Optimized version that checks for NaN/Inf once instead of per-component.
-    
-    Args:
-        vec: Blender Vector object with x, y, z components
-        
-    Returns:
-        List of 3 safe float values
-    """
-    result = [float(vec.x), float(vec.y), float(vec.z)]
-    if any(math.isnan(v) or math.isinf(v) for v in result):
-        logger.warning(f"Invalid vector detected, replacing with zeros")
-        return [0.0, 0.0, 0.0]
-    return result
 
 
 class DFM_SaveGeometryOperator(bpy.types.Operator):
@@ -78,11 +59,22 @@ class DFM_SaveGeometryOperator(bpy.types.Operator):
         
         logger.info(f"Exporting {obj.name} to branch {current_branch}")
         
-        # Create directory with exist_ok to avoid race conditions
-        os.makedirs(commit_dir, exist_ok=True)
+        # Create directory with retry logic to avoid race conditions
+        max_retries = 3
+        for attempt in range(max_retries):
+            try:
+                os.makedirs(commit_dir, exist_ok=True)
+                break
+            except OSError as e:
+                if attempt == max_retries - 1:
+                    logger.error(f"Failed to create commit directory after {max_retries} attempts: {e}")
+                    self.report({'ERROR'}, f"Failed to create export directory: {e}")
+                    return {'CANCELLED'}
+                time.sleep(0.1)  # Brief wait before retry
         
         # Prepare commit data
         commit_data = {
+            "data_version": "1.1",  # Track data format version for migrations
             "timestamp": timestamp,
             "datetime": datetime.now().isoformat(),
             "commit_message": commit_message,

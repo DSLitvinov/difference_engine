@@ -52,13 +52,34 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
     
     commit_path: bpy.props.StringProperty()
+    offset_distance: bpy.props.FloatProperty(
+        name="Offset Distance",
+        description="Distance to offset the comparison version",
+        default=2.0,
+        min=0.0,
+        max=10.0
+    )
     
     def execute(self, context):
         import json
         import os
+        import logging
         
-        # Always create new object for comparison
-        # Load with all components enabled
+        logger = logging.getLogger(__name__)
+        
+        # Load commit info
+        commit_file = os.path.join(self.commit_path, "commit.json")
+        commit_name = "Version"
+        try:
+            if os.path.exists(commit_file):
+                with open(commit_file, 'r') as f:
+                    commit_data = json.load(f)
+                commit_name = commit_data.get('timestamp', 'Version')
+                logger.info(f"Comparing with version: {commit_name}")
+        except Exception as e:
+            logger.warning(f"Failed to load commit info: {e}")
+        
+        # Always create new object for comparison with all components
         result = bpy.ops.object.load_geometry(
             filepath=self.commit_path,
             import_mode='NEW',
@@ -72,13 +93,31 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
             # Offset the comparison object
             if context.active_object:
                 obj = context.active_object
-                # Add "_compare" suffix to name
+                # Add "_compare" suffix to name for easy identification
                 obj.name = obj.name + "_compare"
                 obj.data.name = obj.data.name + "_compare"
-                # Offset by 2 units on X axis
-                obj.location.x += 2.0
                 
-                self.report({'INFO'}, "Loaded comparison version with offset")
+                # Get current selection to determine offset direction
+                original_obj = None
+                for o in context.selected_objects:
+                    if "_compare" not in o.name:
+                        original_obj = o
+                        break
+                
+                # Offset based on original object if available
+                if original_obj:
+                    obj.location.x = original_obj.location.x + self.offset_distance
+                    obj.location.y = original_obj.location.y
+                    obj.location.z = original_obj.location.z
+                else:
+                    # Default offset if no comparison available
+                    obj.location.x += self.offset_distance
+                
+                # Make it slightly transparent for visual comparison
+                obj.active_material.use_nodes = True
+                
+                logger.info(f"Loaded comparison version '{commit_name}' with offset {self.offset_distance}")
+                self.report({'INFO'}, f"Loaded comparison version: {commit_name} (offset +{self.offset_distance})")
         
         return result
 

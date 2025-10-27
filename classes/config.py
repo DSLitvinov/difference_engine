@@ -61,18 +61,38 @@ class DFM_Config:
             return False
     
     def validate(self) -> bool:
-        """Validate configuration values"""
+        """Validate configuration values
+        
+        Returns:
+            True if configuration is valid
+            
+        Raises:
+            ValueError: If configuration contains invalid values
+        """
+        errors = []
+        
         if self.DEFAULT_CHUNK_SIZE <= 0:
-            logger.error("DEFAULT_CHUNK_SIZE must be positive")
-            return False
+            errors.append("DEFAULT_CHUNK_SIZE must be positive")
         
         if self.MAX_SEARCH_RESULTS <= 0:
-            logger.error("MAX_SEARCH_RESULTS must be positive")
-            return False
+            errors.append("MAX_SEARCH_RESULTS must be positive")
         
         if self.AUTO_COMPRESS_THRESHOLD < 0:
-            logger.error("AUTO_COMPRESS_THRESHOLD must be non-negative")
-            return False
+            errors.append("AUTO_COMPRESS_THRESHOLD must be non-negative")
+        
+        if self.MAX_FILE_SIZE_MB <= 0:
+            errors.append("MAX_FILE_SIZE_MB must be positive")
+        
+        if self.BACKUP_RETENTION_DAYS < 0:
+            errors.append("BACKUP_RETENTION_DAYS must be non-negative")
+        
+        if not self.ALLOWED_FILE_EXTENSIONS:
+            errors.append("ALLOWED_FILE_EXTENSIONS must not be empty")
+        
+        if len(errors) > 0:
+            error_msg = "Configuration validation failed:\n" + "\n".join(f"  - {err}" for err in errors)
+            logger.error(error_msg)
+            raise ValueError(error_msg)
         
         return True
 
@@ -98,18 +118,28 @@ class DFM_ConfigManager:
         return self._config
     
     def load_config(self, base_path: str) -> bool:
-        """Load configuration from addon directory"""
+        """Load configuration from addon directory
+        
+        Args:
+            base_path: Path to the addon directory
+            
+        Returns:
+            True if configuration loaded successfully, False otherwise
+        """
         try:
             config_path = os.path.join(base_path, 'config.json')
             self._config = DFM_Config.load_from_file(config_path)
             
-            if not self._config.validate():
-                logger.warning("Invalid configuration detected, using defaults")
+            # Validate may raise ValueError
+            try:
+                self._config.validate()
+                logger.info("Configuration loaded successfully")
+                return True
+            except ValueError as e:
+                logger.warning(f"Invalid configuration detected: {e}")
+                logger.info("Using default configuration")
                 self._config = DFM_Config()
                 return False
-            
-            logger.info("Configuration loaded successfully")
-            return True
             
         except Exception as e:
             logger.error(f"Failed to load configuration: {e}")
@@ -126,7 +156,17 @@ class DFM_ConfigManager:
             return False
     
     def update_config(self, **kwargs) -> bool:
-        """Update configuration values"""
+        """Update configuration values
+        
+        Args:
+            **kwargs: Configuration values to update
+            
+        Returns:
+            True if update successful, False otherwise
+            
+        Raises:
+            ValueError: If validation fails after update
+        """
         try:
             for key, value in kwargs.items():
                 if hasattr(self._config, key):
@@ -134,7 +174,13 @@ class DFM_ConfigManager:
                 else:
                     logger.warning(f"Unknown configuration key: {key}")
             
-            return self._config.validate()
+            # Validate will raise ValueError if invalid
+            self._config.validate()
+            return True
+            
+        except ValueError as e:
+            logger.error(f"Configuration update failed validation: {e}")
+            return False
         except Exception as e:
             logger.error(f"Failed to update configuration: {e}")
             return False

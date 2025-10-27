@@ -167,6 +167,18 @@ class DFM_VersionManager:
         # Keep the most recent versions, compress the rest
         for commit in history[keep_versions:]:
             commit_path = commit['commit_path']
+            
+            # Validate commit path for security
+            if not commit_path or not isinstance(commit_path, str):
+                logger.warning(f"Invalid commit path: {commit_path}")
+                continue
+            
+            # Additional security check - ensure path is within expected directory
+            base_dir = bpy.path.abspath("//.difference_machine/")
+            if not commit_path.startswith(base_dir):
+                logger.warning(f"Commit path outside expected directory: {commit_path}")
+                continue
+            
             zip_path = commit_path + '.zip'
             
             # Skip if already compressed
