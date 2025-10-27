@@ -127,7 +127,7 @@ def convert_to_json_serializable(obj: Any) -> Union[None, bool, str, int, float,
         return None
 
 
-def validate_file_path(file_path: str, must_exist: bool = False, must_be_file: bool = False) -> bool:
+def validate_file_path(file_path: str, must_exist: bool = False, must_be_file: bool = False, allow_absolute: bool = False) -> bool:
     """
     Validate a file path for security and correctness.
     
@@ -135,6 +135,7 @@ def validate_file_path(file_path: str, must_exist: bool = False, must_be_file: b
         file_path: Path to validate
         must_exist: Whether the path must exist
         must_be_file: Whether the path must be a file (not directory)
+        allow_absolute: Whether to allow absolute paths (for export operations)
         
     Returns:
         True if path is valid, False otherwise
@@ -148,8 +149,8 @@ def validate_file_path(file_path: str, must_exist: bool = False, must_be_file: b
         logger.error(f"Potentially dangerous path detected: {file_path}")
         return False
     
-    # Prevent absolute paths
-    if os.path.isabs(file_path):
+    # Prevent absolute paths unless explicitly allowed
+    if os.path.isabs(file_path) and not allow_absolute:
         logger.error(f"Absolute path not allowed: {file_path}")
         return False
     
@@ -181,18 +182,19 @@ def validate_file_path(file_path: str, must_exist: bool = False, must_be_file: b
     return True
 
 
-def validate_directory_path(dir_path: str, create_if_missing: bool = False) -> bool:
+def validate_directory_path(dir_path: str, create_if_missing: bool = False, allow_absolute: bool = False) -> bool:
     """
     Validate a directory path and optionally create it.
     
     Args:
         dir_path: Directory path to validate
         create_if_missing: Whether to create directory if it doesn't exist
+        allow_absolute: Whether to allow absolute paths (for export operations)
         
     Returns:
         True if directory is valid/exists, False otherwise
     """
-    if not validate_file_path(dir_path):
+    if not validate_file_path(dir_path, allow_absolute=allow_absolute):
         return False
     
     if not os.path.exists(dir_path):

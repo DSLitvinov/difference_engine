@@ -82,17 +82,24 @@ class DFM_VersionManager:
         Returns:
             List of branch data dictionaries with name, commit_count, and last_commit
         """
-        # Try to load from index first
+        # Try to load from index first, but verify branches exist on disk
         branches_index = DFM_IndexManager.load_index(mesh_name, 'branches_index')
         if branches_index and 'branches' in branches_index:
             # Convert index format to expected format
             branches = []
+            base_dir = bpy.path.abspath("//.difference_machine/")
+            mesh_dir = os.path.join(base_dir, sanitize_path_component(mesh_name))
+            
             for branch in branches_index['branches']:
-                branches.append({
-                    'name': branch['name'],
-                    'commit_count': branch['commit_count'],
-                    'last_commit': branch['last_commit_timestamp']
-                })
+                # Verify branch directory actually exists
+                branch_name = branch['name']
+                branch_path = os.path.join(mesh_dir, branch_name)
+                if os.path.exists(branch_path) and os.path.isdir(branch_path):
+                    branches.append({
+                        'name': branch_name,
+                        'commit_count': branch['commit_count'],
+                        'last_commit': branch['last_commit_timestamp']
+                    })
             return branches
         
         # Fallback to filesystem scan if index not available

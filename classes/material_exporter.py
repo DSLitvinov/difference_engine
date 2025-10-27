@@ -47,8 +47,8 @@ class DFM_MaterialExporter:
         if not export_path:
             raise DFM_Error("Export path cannot be empty", DFM_ErrorType.VALIDATION_ERROR)
         
-        # Validate export path
-        if not validate_directory_path(export_path, create_if_missing=True):
+        # Validate export path (allow absolute paths for export operations)
+        if not validate_directory_path(export_path, create_if_missing=True, allow_absolute=True):
             raise DFM_Error(f"Invalid export path: {export_path}", DFM_ErrorType.FILE_OPERATION_ERROR)
         
         try:
@@ -62,9 +62,9 @@ class DFM_MaterialExporter:
                 "use_nodes": material.use_nodes
             }
             
-            # Create textures directory
+            # Create textures directory (allow absolute paths)
             textures_dir = os.path.join(export_path, "textures")
-            if not validate_directory_path(textures_dir, create_if_missing=True):
+            if not validate_directory_path(textures_dir, create_if_missing=True, allow_absolute=True):
                 raise DFM_Error(f"Failed to create textures directory: {textures_dir}", DFM_ErrorType.FILE_OPERATION_ERROR)
             
             # Export node-based materials
@@ -76,8 +76,8 @@ class DFM_MaterialExporter:
             # Save material JSON
             material_file = os.path.join(export_path, f"material_{material.name}.json")
             
-            # Validate file path before writing
-            if not validate_file_path(material_file):
+            # Validate file path before writing (allow absolute paths)
+            if not validate_file_path(material_file, allow_absolute=True):
                 raise DFM_Error(f"Invalid material file path: {material_file}", DFM_ErrorType.FILE_OPERATION_ERROR)
             
             with open(material_file, 'w') as f:
@@ -268,8 +268,8 @@ class DFM_MaterialExporter:
                 
                 dest_path = os.path.join(textures_dir, image_filename)
                 
-                # Validate destination path
-                if not validate_file_path(dest_path):
+                # Validate destination path (allow absolute paths)
+                if not validate_file_path(dest_path, allow_absolute=True):
                     logger.warning(f"Invalid destination path for packed image: {dest_path}")
                     return
                 
@@ -281,8 +281,8 @@ class DFM_MaterialExporter:
             elif node.image.filepath and os.path.exists(bpy.path.abspath(node.image.filepath)):
                 source_path = bpy.path.abspath(node.image.filepath)
                 
-                # Validate source path
-                if not validate_file_path(source_path, must_exist=True, must_be_file=True):
+                # Validate source path (allow absolute paths)
+                if not validate_file_path(source_path, must_exist=True, must_be_file=True, allow_absolute=True):
                     logger.warning(f"Invalid source path for image: {source_path}")
                     return
                 
@@ -293,8 +293,8 @@ class DFM_MaterialExporter:
                 
                 dest_path = os.path.join(textures_dir, os.path.basename(node.image.filepath))
                 
-                # Validate destination path
-                if not validate_file_path(dest_path):
+                # Validate destination path (allow absolute paths)
+                if not validate_file_path(dest_path, allow_absolute=True):
                     logger.warning(f"Invalid destination path for image: {dest_path}")
                     return
                 
