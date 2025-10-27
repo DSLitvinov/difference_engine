@@ -8,7 +8,7 @@ type = "add-on"
 tags = ["Object"]
 blender_version_min = "4.2.0"
 license = ["SPDX:GPL-3.0-or-later"]
-website = "https://github.com/DSLitvinov/difference_machine
+website = "https://github.com/DSLitvinov/difference_engine"
 copyright = ["2025 nopomuk"]
 [permissions]
 files = "Creates and updates files in the add-on directory"
