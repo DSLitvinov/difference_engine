@@ -76,6 +76,34 @@ class DFM_UIHelpers:
             col_right.prop(scene, "dfm_export_uv", text="UV Layout", icon='UV')
     
     @staticmethod
+    def draw_import_options(layout: bpy.types.UILayout, scene: bpy.types.Scene, 
+                           import_mode: str = 'AUTO') -> None:
+        """Draw import options section"""
+        box = layout.box()
+        DFM_UIHelpers.draw_box_header(box, "Import Components", 'IMPORT')
+        
+        col = box.column(align=True)
+        col.prop(scene, "dfm_import_all", text="Import All Components")
+        
+        if not scene.dfm_import_all:
+            col.separator()
+            # Create two columns for better organization
+            split = col.split(factor=0.5)
+            
+            col_left = split.column(align=True)
+            row = col_left.row()
+            row.prop(scene, "dfm_import_geometry", text="Geometry", icon='MESH_DATA')
+            # Disable geometry if applying to selected
+            if import_mode == 'SELECTED':
+                row.enabled = False
+            
+            col_left.prop(scene, "dfm_import_materials", text="Materials", icon='MATERIAL')
+            
+            col_right = split.column(align=True)
+            col_right.prop(scene, "dfm_import_uv", text="UV Layout", icon='UV')
+            col_right.prop(scene, "dfm_import_transform", text="Transform", icon='ORIENTATION_LOCAL')
+    
+    @staticmethod
     def draw_version_control(layout: bpy.types.UILayout, scene: bpy.types.Scene) -> None:
         """Draw version control options"""
         box = layout.box()

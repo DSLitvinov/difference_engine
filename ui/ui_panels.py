@@ -177,43 +177,33 @@ class DFM_VersionImport_PT_panel(bpy.types.Panel):
             if not context.active_object:
                 col.label(text="Select an object first!", icon='ERROR')
         
-        # Import components
-        box = layout.box()
-        col = box.column(align=True)
-        col.label(text="Import Components:", icon='IMPORT')
-        
-        col.separator()
-        
-        # Geometry (with note for selected mode)
-        row = col.row()
-        row.prop(scene, "dfm_import_geometry", text="Geometry")
-        if scene.dfm_import_mode == 'SELECTED':
-            row.enabled = False
-        
-        col.prop(scene, "dfm_import_materials", text="Materials")
-        col.prop(scene, "dfm_import_uv", text="UV Layouts")
-        col.prop(scene, "dfm_import_transform", text="Transform")
-        
-        # Quick toggle all button
-        layout.separator()
-        row = layout.row(align=True)
-        row.operator("object.dfm_toggle_import_all", text="All", icon='CHECKBOX_HLT')
-        row.operator("object.dfm_toggle_import_none", text="None", icon='CHECKBOX_DEHLT')
+        # Import components using new helper
+        DFM_UIHelpers.draw_import_options(layout, scene, scene.dfm_import_mode)
         
         # Show what will be imported
+        import_all = scene.dfm_import_all
         imported_components = []
-        if scene.dfm_import_geometry:
-            imported_components.append("Geometry")
-        if scene.dfm_import_materials:
-            imported_components.append("Materials")
-        if scene.dfm_import_uv:
-            imported_components.append("UV")
-        if scene.dfm_import_transform:
-            imported_components.append("Transform")
+        
+        if import_all:
+            # If "Import All" is checked, show all components
+            imported_components = ["Geometry", "Materials", "UV", "Transform"]
+        else:
+            # Check individual checkboxes
+            if scene.dfm_import_geometry:
+                imported_components.append("Geometry")
+            if scene.dfm_import_materials:
+                imported_components.append("Materials")
+            if scene.dfm_import_uv:
+                imported_components.append("UV")
+            if scene.dfm_import_transform:
+                imported_components.append("Transform")
         
         if imported_components:
             box = layout.box()
-            box.label(text=f"Will import: {', '.join(imported_components)}", icon='INFO')
+            if import_all:
+                box.label(text=f"Will import all components", icon='INFO')
+            else:
+                box.label(text=f"Will import: {', '.join(imported_components)}", icon='INFO')
         else:
             box = layout.box()
             box.label(text="Warning: Nothing selected!", icon='ERROR')

@@ -18,10 +18,21 @@ class DFM_LoadVersionOperator(bpy.types.Operator):
         
         # Use the import settings from the scene
         import_mode = scene.dfm_import_mode
-        import_geometry = scene.dfm_import_geometry
-        import_transform = scene.dfm_import_transform
-        import_materials = scene.dfm_import_materials
-        import_uv = scene.dfm_import_uv
+        
+        # Respect the "import all" master checkbox
+        import_all = scene.dfm_import_all
+        if import_all:
+            # If "Import All" is checked, enable all components
+            import_geometry = True
+            import_transform = True
+            import_materials = True
+            import_uv = True
+        else:
+            # Use individual checkboxes
+            import_geometry = scene.dfm_import_geometry
+            import_transform = scene.dfm_import_transform
+            import_materials = scene.dfm_import_materials
+            import_uv = scene.dfm_import_uv
         
         # Debug: Report what we're importing
         components = []

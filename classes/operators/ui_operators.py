@@ -12,6 +12,9 @@ class DFM_ToggleImportAll_OT_operator(bpy.types.Operator):
     
     def execute(self, context):
         scene = context.scene
+        # Set the master "Import All" checkbox
+        scene.dfm_import_all = True
+        # Also set individual checkboxes for consistency
         scene.dfm_import_geometry = True
         scene.dfm_import_materials = True
         scene.dfm_import_uv = True
@@ -28,6 +31,9 @@ class DFM_ToggleImportNone_OT_operator(bpy.types.Operator):
     
     def execute(self, context):
         scene = context.scene
+        # Set the master "Import All" checkbox
+        scene.dfm_import_all = False
+        # Also clear individual checkboxes for consistency
         scene.dfm_import_geometry = False
         scene.dfm_import_materials = False
         scene.dfm_import_uv = False

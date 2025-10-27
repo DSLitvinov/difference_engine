@@ -75,6 +75,11 @@ def register_properties():
     )
     
     # Import options for version history
+    bpy.types.Scene.dfm_import_all = bpy.props.BoolProperty(
+        name="Import All",
+        default=True,
+        description="Import all components"
+    )
     bpy.types.Scene.dfm_import_geometry = bpy.props.BoolProperty(
         name="Import Geometry",
         default=True,
@@ -121,6 +126,7 @@ def unregister_properties():
     del bpy.types.Scene.dfm_commit_list_index
     del bpy.types.Scene.dfm_selected_commit_path
     del bpy.types.Scene.dfm_branch_list_index
+    del bpy.types.Scene.dfm_import_all
     del bpy.types.Scene.dfm_import_geometry
     del bpy.types.Scene.dfm_import_transform
     del bpy.types.Scene.dfm_import_materials
