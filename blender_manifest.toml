@@ -1,14 +1,14 @@
 schema_version = "1.0.0"
 id = "difference_engine"
 name = "Difference Engine"
-version = "0.0.2"
+version = "0.0.1"
 tagline = "Version control"
 maintainer = "Dmitry Litvinov <nopomuk@yandex.ru>"
 type = "add-on"
 tags = ["Object"]
 blender_version_min = "4.2.0"
 license = ["SPDX:GPL-3.0-or-later"]
-website = "https://gitverse.ru/Nopomuk/difference_engine"
+website = "https://github.com/DSLitvinov/difference_machine
 copyright = ["2025 nopomuk"]
 [permissions]
 files = "Creates and updates files in the add-on directory"
