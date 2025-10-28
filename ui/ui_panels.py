@@ -5,9 +5,8 @@ import bpy
 import os
 import logging
 from typing import Optional
-from .ui_helpers import DFM_UIHelpers, refresh_commit_list, refresh_branch_list, get_index_status
+from .ui_helpers import DFM_UIHelpers, refresh_commit_list, refresh_branch_list
 from ..classes.version_manager import DFM_VersionManager
-from ..classes.index_manager import DFM_IndexManager
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -332,91 +331,3 @@ class DFM_Branches_PT_panel(bpy.types.Panel):
             row.operator("object.delete_branch", text="Delete Branch", icon='TRASH')
 
 
-class DFM_IndexManagement_PT_panel(bpy.types.Panel):
-    """Index management panel for quick search functionality"""
-    bl_idname = 'DFM_PT_panel_index_management'
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = 'Difference Machine'
-    bl_label = 'Index Management'
-    bl_order = 3
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context: bpy.types.Context) -> bool:
-        return context.active_object and context.active_object.type == 'MESH'
-
-    def draw(self, context: bpy.types.Context) -> None:
-        layout = self.layout
-        active_obj = context.active_object
-        
-        if not active_obj or active_obj.type != 'MESH':
-            layout.label(text="Please select a mesh object", icon='ERROR')
-            return
-        
-        mesh_name = active_obj.name
-        
-        # Get index status
-        index_status = get_index_status(mesh_name)
-        
-        # Index status section
-        box = layout.box()
-        col = box.column(align=True)
-        col.label(text="Index Status", icon='INFO')
-        
-        if index_status['branches_index_exists']:
-            col.label(text="✓ Branches index available", icon='CHECKMARK')
-        else:
-            col.label(text="✗ Branches index missing", icon='X')
-        
-        # Quick actions section
-        layout.separator()
-        box = layout.box()
-        col = box.column(align=True)
-        col.label(text="Quick Actions", icon='TOOL_SETTINGS')
-        
-        # Update indices button
-        row = col.row()
-        row.scale_y = 1.2
-        row.operator("object.dfm_update_indices", text="Update Indices", icon='FILE_REFRESH')
-        
-        # Quick search button
-        row = col.row()
-        row.scale_y = 1.2
-        row.operator("object.dfm_quick_search", text="Quick Search", icon='VIEWZOOM')
-        
-        # Maintenance section
-        layout.separator()
-        box = layout.box()
-        col = box.column(align=True)
-        col.label(text="Maintenance", icon='TOOL_SETTINGS')
-        
-        # Validate integrity button
-        row = col.row()
-        row.operator("object.dfm_validate_integrity", text="Validate Integrity", icon='CHECKMARK')
-        
-        # Backup and restore buttons
-        row = col.row(align=True)
-        row.operator("object.dfm_backup_indices", text="Backup", icon='EXPORT')
-        row.operator("object.dfm_restore_from_backup", text="Restore", icon='IMPORT')
-        
-        # Index info section
-        layout.separator()
-        box = layout.box()
-        col = box.column(align=True)
-        col.label(text="Index Information", icon='INFO')
-        
-        # Show index statistics
-        if index_status['index_stats']:
-            stats = index_status['index_stats']
-            col.label(text=f"Branches: {stats.get('total_branches', 0)}")
-            col.label(text=f"Total Commits: {stats.get('total_commits', 0)}")
-            
-            if stats.get('last_updated'):
-                col.label(text=f"Last Updated: {stats['last_updated']}")
-        else:
-            col.label(text="No index data available", icon='ERROR')
-        
-        # Show error if any
-        if 'error' in index_status:
-            col.label(text=f"Error: {index_status['error']}", icon='ERROR')

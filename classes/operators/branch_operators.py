@@ -39,10 +39,6 @@ class DFM_CreateBranchOperator(bpy.types.Operator):
             from ..version_manager import DFM_VersionManager
             DFM_VersionManager.save_current_branch(active_obj.name, self.branch_name)
             
-            # Update index to include the new branch
-            from ..index_manager import DFM_IndexManager
-            DFM_IndexManager.update_all_indices(active_obj.name)
-            
             # Refresh the branch list to show the new branch
             from ...ui.ui_helpers import refresh_branch_list
             refresh_branch_list(context)
@@ -210,10 +206,6 @@ class DFM_DeleteBranchOperator(bpy.types.Operator):
             import shutil
             shutil.rmtree(branch_dir)
             self.report({'INFO'}, f"Deleted branch: {branch_name}")
-            
-            # Update index to remove the deleted branch
-            from ..index_manager import DFM_IndexManager
-            DFM_IndexManager.update_all_indices(active_obj.name)
             
             # Refresh the branch list
             from ...ui.ui_helpers import refresh_branch_list

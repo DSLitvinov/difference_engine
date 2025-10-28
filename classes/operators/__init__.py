@@ -19,13 +19,6 @@ from .ui_operators import (
     DFM_ToggleImportAll_OT_operator,
     DFM_ToggleImportNone_OT_operator
 )
-from .index_operators import (
-    DFM_UpdateIndicesOperator,
-    DFM_ValidateIntegrityOperator,
-    DFM_BackupIndicesOperator,
-    DFM_RestoreFromBackupOperator,
-    DFM_QuickSearchOperator
-)
 
 # Classes list for registration
 classes = [
@@ -40,12 +33,7 @@ classes = [
     DFM_DeleteBranchOperator,
     DFM_GoToBranchOperator,
     DFM_ToggleImportAll_OT_operator,
-    DFM_ToggleImportNone_OT_operator,
-    DFM_UpdateIndicesOperator,
-    DFM_ValidateIntegrityOperator,
-    DFM_BackupIndicesOperator,
-    DFM_RestoreFromBackupOperator,
-    DFM_QuickSearchOperator
+    DFM_ToggleImportNone_OT_operator
 ]
 
 __all__ = [
@@ -61,11 +49,6 @@ __all__ = [
     'DFM_GoToBranchOperator',
     'DFM_ToggleImportAll_OT_operator',
     'DFM_ToggleImportNone_OT_operator',
-    'DFM_UpdateIndicesOperator',
-    'DFM_ValidateIntegrityOperator',
-    'DFM_BackupIndicesOperator',
-    'DFM_RestoreFromBackupOperator',
-    'DFM_QuickSearchOperator',
     'classes'
 ]
 

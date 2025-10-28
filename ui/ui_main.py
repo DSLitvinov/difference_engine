@@ -11,8 +11,7 @@ from .ui_panels import (
     DFM_Export_PT_panel,
     DFM_History_PT_panel,
     DFM_VersionImport_PT_panel,
-    DFM_Branches_PT_panel,
-    DFM_IndexManagement_PT_panel
+    DFM_Branches_PT_panel
 )
 from .ui_operators import (
     DFM_RefreshCommits_OT_operator,
@@ -47,7 +46,6 @@ classes = [
     DFM_History_PT_panel,
     DFM_VersionImport_PT_panel,
     DFM_Branches_PT_panel,
-    DFM_IndexManagement_PT_panel,
 ] + operator_classes
 
 

@@ -6,7 +6,6 @@ import logging
 import os
 from typing import Optional, Any, Dict
 from ..classes.version_manager import DFM_VersionManager
-from ..classes.index_manager import DFM_IndexManager
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -275,37 +274,3 @@ def load_saved_branch_on_object_change(scene: bpy.types.Scene) -> None:
         logger.debug(f"Object change branch loading failed: {e}")
 
 
-def get_index_status(mesh_name: str) -> Dict[str, Any]:
-    """Get index status information for a mesh"""
-    try:
-        mesh_dir = DFM_IndexManager.get_mesh_dir(mesh_name)
-        branches_index_exists = os.path.exists(os.path.join(mesh_dir, 'branches_index.json'))
-        
-        status = {
-            'branches_index_exists': branches_index_exists,
-            'mesh_dir': mesh_dir,
-            'index_stats': {}
-        }
-        
-        if branches_index_exists:
-            branches_index = DFM_IndexManager.load_index(mesh_name, 'branches_index')
-            if branches_index and 'branches' in branches_index:
-                total_branches = len(branches_index['branches'])
-                total_commits = sum(branch['commit_count'] for branch in branches_index['branches'])
-                
-                status['index_stats'] = {
-                    'total_branches': total_branches,
-                    'total_commits': total_commits,
-                    'last_updated': branches_index.get('last_updated', 'Unknown')
-                }
-        
-        return status
-        
-    except Exception as e:
-        logger.error(f"Failed to get index status for {mesh_name}: {e}")
-        return {
-            'branches_index_exists': False,
-            'mesh_dir': '',
-            'index_stats': {},
-            'error': str(e)
-        }

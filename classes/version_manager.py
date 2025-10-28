@@ -9,7 +9,6 @@ import zipfile
 import logging
 from typing import List, Dict, Any, Optional
 from .utils import sanitize_path_component
-from .index_manager import DFM_IndexManager
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -74,7 +73,6 @@ class DFM_VersionManager:
     def get_object_branches(mesh_name: str) -> List[Dict[str, Any]]:
         """
         Get all branches for an object with commit counts and last commit info.
-        Uses index for faster access when available.
         
         Args:
             mesh_name: Name of the mesh object
@@ -82,27 +80,6 @@ class DFM_VersionManager:
         Returns:
             List of branch data dictionaries with name, commit_count, and last_commit
         """
-        # Try to load from index first, but verify branches exist on disk
-        branches_index = DFM_IndexManager.load_index(mesh_name, 'branches_index')
-        if branches_index and 'branches' in branches_index:
-            # Convert index format to expected format
-            branches = []
-            base_dir = bpy.path.abspath("//.difference_machine/")
-            mesh_dir = os.path.join(base_dir, sanitize_path_component(mesh_name))
-            
-            for branch in branches_index['branches']:
-                # Verify branch directory actually exists
-                branch_name = branch['name']
-                branch_path = os.path.join(mesh_dir, branch_name)
-                if os.path.exists(branch_path) and os.path.isdir(branch_path):
-                    branches.append({
-                        'name': branch_name,
-                        'commit_count': branch['commit_count'],
-                        'last_commit': branch['last_commit_timestamp']
-                    })
-            return branches
-        
-        # Fallback to filesystem scan if index not available
         base_dir = bpy.path.abspath("//.difference_machine/")
         mesh_dir = os.path.join(base_dir, sanitize_path_component(mesh_name))
         
@@ -144,9 +121,6 @@ class DFM_VersionManager:
         
         # Sort branches by name (main first, then alphabetical)
         branches.sort(key=lambda x: (x['name'] != 'main', x['name']))
-        
-        # Update index for future use
-        DFM_IndexManager.update_all_indices(mesh_name)
         
         return branches
     
@@ -299,9 +273,6 @@ class DFM_VersionManager:
                 json.dump(branch_info, f, indent=2)
             
             logger.info(f"Saved current branch '{branch_name}' for mesh '{mesh_name}'")
-            
-            # Update indices after saving branch info
-            DFM_IndexManager.update_all_indices(mesh_name)
             
             return True
             
