@@ -115,7 +115,7 @@ class DFM_LoadGeometryOperator(bpy.types.Operator):
                 mesh = obj.data
             
             # Import geometry
-            if self.import_geometry and mode == 'NEW' and mesh_data:
+            if self.import_geometry and mesh_data:
                 self._import_geometry(mesh, mesh_data)
             
             # Import UV layers
@@ -170,6 +170,10 @@ class DFM_LoadGeometryOperator(bpy.types.Operator):
         vertices = [v['co'] for v in mesh_data.get('vertices', [])]
         faces = [f['vertices'] for f in mesh_data.get('faces', [])]
         
+        # Clear existing mesh data to avoid array size conflicts
+        mesh.clear_geometry()
+        
+        # Import new geometry
         mesh.from_pydata(vertices, [], faces)
         mesh.update()
     

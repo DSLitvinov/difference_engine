@@ -31,12 +31,7 @@ class DFM_Current_Branch_PT_panel(bpy.types.Panel):
         scene = context.scene
         active_obj = context.active_object
         
-        # Check if mesh has any branches and clear current branch if not
-        if active_obj and active_obj.type == 'MESH':
-            from ..classes.version_manager import DFM_VersionManager
-            branches = DFM_VersionManager.get_object_branches(active_obj.name)
-            if not branches and scene.dfm_current_branch:
-                scene.dfm_current_branch = ""
+        # Note: Cannot modify scene properties in draw() method
         
         # Current branch display
         box = layout.box()
@@ -263,6 +258,9 @@ class DFM_VersionImport_PT_panel(bpy.types.Panel):
         row.scale_y = 1.5
         
         op = row.operator("object.load_version", text="Load Version", icon='IMPORT')
+        op.commit_path = commit.commit_path
+        
+        op = row.operator("object.replace_with_version", text="Replace", icon='FILE_REFRESH')
         op.commit_path = commit.commit_path
         
         # Compare button with standard blue pressed state when active

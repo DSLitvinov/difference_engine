@@ -5,6 +5,7 @@ from .export_operator import DFM_SaveGeometryOperator
 from .import_operator import DFM_LoadGeometryOperator
 from .version_operators import (
     DFM_LoadVersionOperator,
+    DFM_ReplaceObjectOperator,
     DFM_CompareVersionsOperator,
     DFM_DeleteVersionOperator
 )
@@ -25,6 +26,7 @@ classes = [
     DFM_SaveGeometryOperator,
     DFM_LoadGeometryOperator,
     DFM_LoadVersionOperator,
+    DFM_ReplaceObjectOperator,
     DFM_CompareVersionsOperator,
     DFM_DeleteVersionOperator,
     DFM_CreateBranchOperator,
@@ -40,6 +42,7 @@ __all__ = [
     'DFM_SaveGeometryOperator',
     'DFM_LoadGeometryOperator',
     'DFM_LoadVersionOperator',
+    'DFM_ReplaceObjectOperator',
     'DFM_CompareVersionsOperator',
     'DFM_DeleteVersionOperator',
     'DFM_CreateBranchOperator',

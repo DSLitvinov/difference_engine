@@ -60,6 +60,69 @@ class DFM_LoadVersionOperator(bpy.types.Operator):
         return result
 
 
+class DFM_ReplaceObjectOperator(bpy.types.Operator):
+    """Replace current object with selected version from history"""
+    bl_idname = "object.replace_with_version"
+    bl_label = "Replace Object"
+    bl_options = {'REGISTER', 'UNDO'}
+    bl_description = "Replace current object with selected version from history"
+    
+    commit_path: bpy.props.StringProperty()
+    
+    def execute(self, context):
+        scene = context.scene
+        active_obj = context.active_object
+        
+        if not active_obj or active_obj.type != 'MESH':
+            self.report({'ERROR'}, "Please select a mesh object")
+            return {'CANCELLED'}
+        
+        try:
+            # Store original name for reporting
+            old_name = active_obj.name
+            
+            # Use the import settings from the scene
+            import_all = scene.dfm_import_all
+            if import_all:
+                # If "Import All" is checked, enable all components
+                import_geometry = True
+                import_transform = True
+                import_materials = True
+                import_uv = True
+            else:
+                # Use individual checkboxes, but always import geometry for replacement
+                import_geometry = True  # Always import geometry for replacement
+                import_transform = scene.dfm_import_transform
+                import_materials = scene.dfm_import_materials
+                import_uv = scene.dfm_import_uv
+            
+            # Call the load_geometry operator with SELECTED mode to replace current object
+            result = bpy.ops.object.load_geometry(
+                filepath=self.commit_path,
+                import_mode='SELECTED',  # Apply to selected object
+                import_geometry=import_geometry,
+                import_transform=import_transform,
+                import_materials=import_materials,
+                import_uv=import_uv
+            )
+            
+            if result == {'FINISHED'}:
+                # Update the object name to reflect the replacement
+                context.active_object.name = f"{old_name}_replaced"
+                
+                self.report({'INFO'}, f"Object '{old_name}' replaced with version from history")
+                logger.info(f"Successfully replaced object '{old_name}' with version from {self.commit_path}")
+                return {'FINISHED'}
+            else:
+                self.report({'ERROR'}, f"Failed to replace object")
+                return {'CANCELLED'}
+                
+        except Exception as e:
+            logger.error(f"Error replacing object: {e}")
+            self.report({'ERROR'}, f"Error replacing object: {str(e)}")
+            return {'CANCELLED'}
+
+
 class DFM_CompareVersionsOperator(bpy.types.Operator):
     """Toggle comparison version with offset"""
     bl_idname = "object.compare_versions"
