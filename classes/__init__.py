@@ -8,7 +8,6 @@ This module is organized into logical components:
 - material_exporter: Material and texture export
 - material_importer: Material and texture import
 - version_manager: Version control management
-- index_manager: Index management for quick search
 - migration: Data migration utilities
 - operators: All Blender operators for UI interaction
 """
@@ -45,7 +44,6 @@ from .config import DFM_Config, DFM_ConfigManager, config_manager
 from .material_exporter import DFM_MaterialExporter
 from .material_importer import DFM_MaterialImporter
 from .version_manager import DFM_VersionManager
-from .index_manager import DFM_IndexManager
 from .migration import DFM_Migration
 
 # Import operators and classes list
@@ -98,7 +96,6 @@ __all__ = [
     'DFM_MaterialExporter',
     'DFM_MaterialImporter',
     'DFM_VersionManager',
-    'DFM_IndexManager',
     'DFM_Migration',
     
     # Operators

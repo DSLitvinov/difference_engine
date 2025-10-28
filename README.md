@@ -9,12 +9,10 @@ A comprehensive version control system for Blender 3D models, providing Git-like
 - **Branch Management**: Create, switch, and manage multiple branches
 - **Material Export/Import**: Full support for Blender materials including node trees, textures, and shaders
 - **Selective Import**: Choose which components to import (geometry, materials, UV, transform)
-- **Quick Search**: Index-based search through commits and branches
 - **Data Integrity**: Validation and restoration of corrupted data
 - **Backup System**: Automatic backup and restore functionality
 
 ### Performance Optimizations
-- **Index-based Search**: Near-instant search through large commit histories
 - **Batch Processing**: Optimized UV and geometry operations (5-10x faster)
 - **Memory Management**: Chunked processing for large datasets
 - **Compression**: Automatic compression of old versions to save disk space
@@ -38,7 +36,6 @@ difference_engine/
 │   ├── material_exporter.py   # Material and texture export
 │   ├── material_importer.py   # Material and texture import
 │   ├── version_manager.py     # Version control operations
-│   ├── index_manager.py       # Index management for quick search
 │   ├── migration.py           # Data migration utilities
 │   └── operators/             # Blender operators
 │       ├── __init__.py
@@ -46,7 +43,6 @@ difference_engine/
 │       ├── import_operator.py
 │       ├── version_operators.py
 │       ├── branch_operators.py
-│       ├── index_operators.py
 │       └── ui_operators.py
 ├── ui/                        # User interface components
 │   ├── __init__.py
