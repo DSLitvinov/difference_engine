@@ -58,13 +58,13 @@ class DFM_RefreshBranches_OT_operator(bpy.types.Operator):
             mesh_name = active_obj.name
             saved_branch = DFM_VersionManager.load_current_branch(mesh_name)
             
-            if saved_branch and saved_branch != 'main':
+            if saved_branch:
                 scene.dfm_current_branch = saved_branch
                 self.report({'INFO'}, f"Loaded saved branch: {saved_branch}")
             else:
-                # If no saved branch, use main
-                scene.dfm_current_branch = 'main'
-                self.report({'INFO'}, "No saved branch found, using main")
+                # If no saved branch, clear it
+                scene.dfm_current_branch = ""
+                self.report({'INFO'}, "No saved branch found")
             
             # Now refresh the branch list with the loaded branch
             if refresh_branch_list(context):
@@ -75,7 +75,7 @@ class DFM_RefreshBranches_OT_operator(bpy.types.Operator):
                 
                 DFM_ErrorHandler.log_operation_success("refresh_branches", {
                     'object': mesh_name,
-                    'branch': saved_branch or 'main'
+                    'branch': saved_branch or 'None'
                 })
                 return {'FINISHED'}
             
@@ -107,7 +107,7 @@ class DFM_LoadSavedBranch_OT_operator(bpy.types.Operator):
             mesh_name = active_obj.name
             saved_branch = DFM_VersionManager.load_current_branch(mesh_name)
             
-            if saved_branch and saved_branch != 'main':
+            if saved_branch:
                 scene.dfm_current_branch = saved_branch
                 # Refresh the branch list UI to show the loaded branch as current
                 refresh_branch_list(context)
@@ -119,14 +119,14 @@ class DFM_LoadSavedBranch_OT_operator(bpy.types.Operator):
                     'branch': saved_branch
                 })
             else:
-                self.report({'INFO'}, "No saved branch found, using main")
-                scene.dfm_current_branch = 'main'
+                self.report({'INFO'}, "No saved branch found")
+                scene.dfm_current_branch = ""
                 refresh_branch_list(context)
                 refresh_commit_list(context)
                 
                 DFM_ErrorHandler.log_operation_success("load_saved_branch", {
                     'object': mesh_name,
-                    'branch': 'main'
+                    'branch': 'None'
                 })
             
             return {'FINISHED'}

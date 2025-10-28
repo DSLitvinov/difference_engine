@@ -160,7 +160,12 @@ def refresh_commit_list(context: bpy.types.Context) -> bool:
         scene.dfm_commit_list.clear()
         
         # Get current branch
-        current_branch = scene.dfm_current_branch or 'main'
+        current_branch = scene.dfm_current_branch or ""
+        
+        # If no current branch, return empty list
+        if not current_branch:
+            logger.info(f"No current branch set for {active_obj.name}")
+            return True
         
         # Get history for current branch only
         history = DFM_VersionManager.get_branch_history(active_obj.name, current_branch)
@@ -200,11 +205,21 @@ def refresh_branch_list(context: bpy.types.Context) -> bool:
         # Get branches
         branches = DFM_VersionManager.get_object_branches(active_obj.name)
         
-        # Load saved current branch if not already set
-        if not scene.dfm_current_branch:
-            scene.dfm_current_branch = DFM_VersionManager.load_current_branch(active_obj.name)
+        # If no branches, don't set any default branch
+        if not branches:
+            logger.info(f"No branches found for {active_obj.name}")
+            return True
         
-        current_branch = scene.dfm_current_branch or 'main'
+        # Only load saved current branch if we have branches and it's not already set
+        if not scene.dfm_current_branch:
+            saved_branch = DFM_VersionManager.load_current_branch(active_obj.name)
+            if saved_branch:
+                scene.dfm_current_branch = saved_branch
+            else:
+                # No saved branch, clear it
+                scene.dfm_current_branch = ""
+        
+        current_branch = scene.dfm_current_branch or ""
         
         # Populate list
         for branch_data in branches:
@@ -259,17 +274,31 @@ def load_saved_branch_on_object_change(scene: bpy.types.Scene) -> None:
         global _last_loaded_object
         current_obj = bpy.context.active_object.name
         
-        # Only load if object changed and we don't have a current branch set
-        if current_obj != _last_loaded_object and not scene.dfm_current_branch:
+        # Always load branch info for new object (don't check if it changed)
+        if current_obj != _last_loaded_object:
             mesh_name = current_obj
-            saved_branch = DFM_VersionManager.load_current_branch(mesh_name)
-            if saved_branch and saved_branch != 'main':
-                scene.dfm_current_branch = saved_branch
+            
+            # Check if mesh has any versions
+            branches = DFM_VersionManager.get_object_branches(mesh_name)
+            
+            if not branches:
+                # No versions, clear current branch
+                scene.dfm_current_branch = ""
+                logger.info(f"No versions found for {mesh_name}, cleared current branch")
+            else:
+                # Load saved branch from file
+                saved_branch = DFM_VersionManager.load_current_branch(mesh_name)
+                if saved_branch:
+                    scene.dfm_current_branch = saved_branch
+                else:
+                    scene.dfm_current_branch = ""
                 
-                # Refresh the branch list UI to show the loaded branch as current
-                refresh_branch_list(bpy.context)
-                logger.info(f"Loaded saved branch '{saved_branch}' for {mesh_name} on object change")
-                
+                logger.info(f"Loaded branch '{saved_branch or 'None'}' for {mesh_name} on object change")
+            
+            # Refresh the branch and commit lists
+            refresh_branch_list(bpy.context)
+            refresh_commit_list(bpy.context)
+            
             _last_loaded_object = current_obj
             
     except Exception as e:
