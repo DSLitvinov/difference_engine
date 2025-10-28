@@ -13,6 +13,39 @@ from ..classes.index_manager import DFM_IndexManager
 logger = logging.getLogger(__name__)
 
 
+class DFM_Current_Branch_PT_panel(bpy.types.Panel):
+    """Branch management panel"""
+    bl_idname = 'DFM_PT_panel_current_branch'
+    bl_space_type = 'VIEW_3D'
+    bl_region_type = 'UI'
+    bl_category = 'Difference Machine'
+    bl_label = 'Current Branch'
+    bl_order = -1
+    
+
+    @classmethod
+    def poll(cls, context: bpy.types.Context) -> bool:
+        return context.active_object and context.active_object.type == 'MESH'
+
+    def draw(self, context: bpy.types.Context) -> None:
+        layout = self.layout
+        scene = context.scene
+        active_obj = context.active_object
+        
+        # Current branch display
+        box = layout.box()
+        col = box.column(align=True)
+        row = col.row(align=True)
+        row.label(text="Current Branch:", icon='OUTLINER')
+        
+        row = col.row()
+        row.scale_y = 1.2
+        row.label(text=scene.dfm_current_branch or 'main', icon='DISCLOSURE_TRI_RIGHT')
+        
+        # Branch list section
+        layout.separator()
+        
+
 class DFM_Export_PT_panel(bpy.types.Panel):
     """Main export panel for Difference Machine"""
     bl_idname = 'DFM_PT_panel_export'
@@ -21,6 +54,7 @@ class DFM_Export_PT_panel(bpy.types.Panel):
     bl_category = 'Difference Machine'
     bl_label = 'Export'
     bl_order = 0
+    bl_options = {'DEFAULT_CLOSED'}
 
     @classmethod
     def poll(cls, context: bpy.types.Context) -> bool:
@@ -247,19 +281,6 @@ class DFM_Branches_PT_panel(bpy.types.Panel):
         layout = self.layout
         scene = context.scene
         active_obj = context.active_object
-        
-        # Current branch display
-        box = layout.box()
-        col = box.column(align=True)
-        row = col.row(align=True)
-        row.label(text="Current Branch:", icon='OUTLINER')
-        
-        row = col.row()
-        row.scale_y = 1.2
-        row.label(text=scene.dfm_current_branch or 'main', icon='DISCLOSURE_TRI_RIGHT')
-        
-        # Branch list section
-        layout.separator()
         
         # Refresh button
         row = layout.row()
