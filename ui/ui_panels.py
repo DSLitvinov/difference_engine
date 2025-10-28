@@ -251,8 +251,24 @@ class DFM_VersionImport_PT_panel(bpy.types.Panel):
         op = row.operator("object.load_version", text="Load Version", icon='IMPORT')
         op.commit_path = commit.commit_path
         
-        op = row.operator("object.compare_versions", text="Compare", icon='SPLIT_HORIZONTAL')
-        op.commit_path = commit.commit_path
+        # Compare button with visual state indication
+        compare_row = row.row(align=True)
+        compare_row.scale_y = 1.5
+        
+        # Check if comparison is active for this commit
+        is_comparison_active = (scene.dfm_comparison_active and 
+                              scene.dfm_comparison_object_name and
+                              scene.dfm_comparison_object_name.endswith('_compare'))
+        
+        if is_comparison_active:
+            # Active state: highlighted button
+            compare_row.alert = True  # Makes button appear highlighted/red
+            op = compare_row.operator("object.compare_versions", text="Compare", icon='SPLIT_HORIZONTAL')
+            op.commit_path = commit.commit_path
+        else:
+            # Inactive state: normal button
+            op = compare_row.operator("object.compare_versions", text="Compare", icon='SPLIT_HORIZONTAL')
+            op.commit_path = commit.commit_path
         
         # Delete button (separate row for emphasis)
         layout.separator()

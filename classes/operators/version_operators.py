@@ -2,7 +2,11 @@
 Version control operators for loading and comparing versions
 """
 import bpy
+import logging
 from ..version_manager import DFM_VersionManager
+
+# Module-level logger for use in helper methods
+logger = logging.getLogger(__name__)
 
 
 class DFM_LoadVersionOperator(bpy.types.Operator):
@@ -57,7 +61,7 @@ class DFM_LoadVersionOperator(bpy.types.Operator):
 
 
 class DFM_CompareVersionsOperator(bpy.types.Operator):
-    """Load a comparison version with offset"""
+    """Toggle comparison version with offset"""
     bl_idname = "object.compare_versions"
     bl_label = "Compare Versions"
     bl_options = {'REGISTER', 'UNDO'}
@@ -77,7 +81,18 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
         import logging
         
         logger = logging.getLogger(__name__)
+        scene = context.scene
         
+        # Check if comparison is already active
+        if scene.dfm_comparison_active and scene.dfm_comparison_object_name:
+            # Toggle OFF: Remove comparison object
+            self._remove_comparison_object(context)
+            scene.dfm_comparison_active = False
+            scene.dfm_comparison_object_name = ""
+            self.report({'INFO'}, "Comparison mode disabled")
+            return {'FINISHED'}
+        
+        # Toggle ON: Create comparison object
         # Load commit info
         commit_file = os.path.join(self.commit_path, "commit.json")
         commit_name = "Version"
@@ -125,12 +140,91 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
                     obj.location.x += self.offset_distance
                 
                 # Make it slightly transparent for visual comparison
-                obj.active_material.use_nodes = True
+                if obj.active_material:
+                    obj.active_material.use_nodes = True
+                
+                # Store comparison state
+                scene.dfm_comparison_active = True
+                scene.dfm_comparison_object_name = obj.name
                 
                 logger.info(f"Loaded comparison version '{commit_name}' with offset {self.offset_distance}")
-                self.report({'INFO'}, f"Loaded comparison version: {commit_name} (offset +{self.offset_distance})")
+                self.report({'INFO'}, f"Comparison mode enabled: {commit_name} (offset +{self.offset_distance})")
         
         return result
+    
+    def _remove_comparison_object(self, context):
+        """Remove the comparison object and all its data from the blend file"""
+        scene = context.scene
+        comparison_name = scene.dfm_comparison_object_name
+        
+        if not comparison_name:
+            return
+        
+        # Find and remove the comparison object
+        if comparison_name in bpy.data.objects:
+            obj = bpy.data.objects[comparison_name]
+            
+            # Safely capture references before deleting anything
+            mesh_ref = obj.data if getattr(obj, 'data', None) else None
+            materials_ref = []
+            try:
+                if mesh_ref and hasattr(mesh_ref, 'materials'):
+                    materials_ref = [m for m in mesh_ref.materials if m]
+            except ReferenceError:
+                materials_ref = []
+            
+            # Deselect the object if needed
+            try:
+                if obj in context.selected_objects:
+                    obj.select_set(False)
+            except ReferenceError:
+                pass
+            
+            # Remove the object first (and unlink)
+            try:
+                bpy.data.objects.remove(obj, do_unlink=True)
+            except ReferenceError:
+                # Already removed
+                pass
+            
+            # Remove mesh if it has no users
+            if mesh_ref and mesh_ref.name in bpy.data.meshes:
+                try:
+                    if mesh_ref.users == 0:
+                        bpy.data.meshes.remove(mesh_ref)
+                except ReferenceError:
+                    pass
+            
+            # Remove materials if they have no users
+            for material in materials_ref:
+                if material and material.name in bpy.data.materials:
+                    try:
+                        if material.users == 0:
+                            bpy.data.materials.remove(material)
+                    except ReferenceError:
+                        pass
+            
+            logger.info(f"Removed comparison object: {comparison_name}")
+        
+        # Clean up any orphaned data
+        self._cleanup_orphaned_data()
+    
+    def _cleanup_orphaned_data(self):
+        """Clean up orphaned materials and textures"""
+        # Remove materials that are no longer used
+        for material in list(bpy.data.materials):
+            if not material.users:
+                bpy.data.materials.remove(material)
+        
+        # Remove textures that are no longer used
+        for texture in list(bpy.data.textures):
+            if not texture.users:
+                bpy.data.textures.remove(texture)
+        
+        # Remove images that are no longer used
+        for image in list(bpy.data.images):
+            if not image.users:
+                bpy.data.images.remove(image)
 
 
 class DFM_DeleteVersionOperator(bpy.types.Operator):
