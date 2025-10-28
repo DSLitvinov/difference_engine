@@ -159,8 +159,11 @@ def refresh_commit_list(context: bpy.types.Context) -> bool:
         # Clear existing list
         scene.dfm_commit_list.clear()
         
-        # Get history
-        history = DFM_VersionManager.get_object_history(active_obj.name)
+        # Get current branch
+        current_branch = scene.dfm_current_branch or 'main'
+        
+        # Get history for current branch only
+        history = DFM_VersionManager.get_branch_history(active_obj.name, current_branch)
         
         # Populate list
         for commit in history:
@@ -169,12 +172,12 @@ def refresh_commit_list(context: bpy.types.Context) -> bool:
             item.timestamp = commit['timestamp']
             item.commit_message = commit['commit_message']
             item.tag = commit.get('tag', '')
-            item.branch = commit.get('branch', 'main')
+            item.branch = commit.get('branch', current_branch)
         
         # Reset selection
         scene.dfm_commit_list_index = 0
         
-        logger.info(f"Refreshed commit list for {active_obj.name}: {len(history)} commits")
+        logger.info(f"Refreshed commit list for {active_obj.name} branch '{current_branch}': {len(history)} commits")
         return True
         
     except Exception as e:

@@ -40,8 +40,9 @@ class DFM_CreateBranchOperator(bpy.types.Operator):
             DFM_VersionManager.save_current_branch(active_obj.name, self.branch_name)
             
             # Refresh the branch list to show the new branch
-            from ...ui.ui_helpers import refresh_branch_list
+            from ...ui.ui_helpers import refresh_branch_list, refresh_commit_list
             refresh_branch_list(context)
+            refresh_commit_list(context)
             
             self.report({'INFO'}, f"Created branch: {self.branch_name}")
         else:
@@ -115,6 +116,10 @@ class DFM_SwitchBranchOperator(bpy.types.Operator):
         
         # Reset selection
         scene.dfm_branch_list_index = 0
+        
+        # Refresh commit list to show commits from the new branch
+        from ...ui.ui_helpers import refresh_commit_list
+        refresh_commit_list(context)
         
         return {'FINISHED'}
 
@@ -207,9 +212,10 @@ class DFM_DeleteBranchOperator(bpy.types.Operator):
             shutil.rmtree(branch_dir)
             self.report({'INFO'}, f"Deleted branch: {branch_name}")
             
-            # Refresh the branch list
-            from ...ui.ui_helpers import refresh_branch_list
+            # Refresh the branch list and commit list
+            from ...ui.ui_helpers import refresh_branch_list, refresh_commit_list
             refresh_branch_list(context)
+            refresh_commit_list(context)
             
         except Exception as e:
             self.report({'ERROR'}, f"Failed to delete branch: {str(e)}")

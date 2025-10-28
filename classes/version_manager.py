@@ -65,6 +65,52 @@ class DFM_VersionManager:
             logger.error(f"Failed to read mesh directory {mesh_dir}: {e}")
             return []
         
+        return history
+    
+    @staticmethod
+    def get_branch_history(mesh_name: str, branch_name: str) -> List[Dict[str, Any]]:
+        """
+        Get commit history for a specific branch.
+        
+        Args:
+            mesh_name: Name of the mesh object
+            branch_name: Name of the branch
+            
+        Returns:
+            List of commit data dictionaries for the specified branch, sorted by timestamp (newest first)
+        """
+        base_dir = bpy.path.abspath("//.difference_machine/")
+        mesh_dir = os.path.join(base_dir, sanitize_path_component(mesh_name))
+        branch_path = os.path.join(mesh_dir, sanitize_path_component(branch_name))
+        
+        if not os.path.exists(branch_path):
+            return []
+        
+        history = []
+        try:
+            for commit in os.listdir(branch_path):
+                commit_path = os.path.join(branch_path, commit)
+                if os.path.isdir(commit_path):
+                    commit_file = os.path.join(commit_path, "commit.json")
+                    
+                    if os.path.exists(commit_file):
+                        try:
+                            with open(commit_file, 'r') as f:
+                                commit_data = json.load(f)
+                                # Validate required fields
+                                if 'timestamp' not in commit_data:
+                                    logger.warning(f"Commit file missing timestamp: {commit_file}")
+                                    continue
+                                commit_data['commit_path'] = commit_path
+                                commit_data['branch'] = branch_name
+                                history.append(commit_data)
+                        except (json.JSONDecodeError, IOError) as e:
+                            logger.error(f"Failed to read commit file {commit_file}: {e}")
+                            continue
+        except OSError as e:
+            logger.error(f"Failed to read branch directory {branch_path}: {e}")
+            return []
+        
         # Sort by timestamp with safe default
         history.sort(key=lambda x: x.get('timestamp', '0000-00-00_00-00-00'), reverse=True)
         return history

@@ -68,6 +68,8 @@ class DFM_RefreshBranches_OT_operator(bpy.types.Operator):
             
             # Now refresh the branch list with the loaded branch
             if refresh_branch_list(context):
+                # Also refresh commit list to show commits from current branch
+                refresh_commit_list(context)
                 # Track which object we loaded for
                 context.scene["dfm_last_branch_obj_name"] = active_obj.name
                 
@@ -109,6 +111,7 @@ class DFM_LoadSavedBranch_OT_operator(bpy.types.Operator):
                 scene.dfm_current_branch = saved_branch
                 # Refresh the branch list UI to show the loaded branch as current
                 refresh_branch_list(context)
+                refresh_commit_list(context)
                 self.report({'INFO'}, f"Loaded saved branch: {saved_branch}")
                 
                 DFM_ErrorHandler.log_operation_success("load_saved_branch", {
@@ -119,6 +122,7 @@ class DFM_LoadSavedBranch_OT_operator(bpy.types.Operator):
                 self.report({'INFO'}, "No saved branch found, using main")
                 scene.dfm_current_branch = 'main'
                 refresh_branch_list(context)
+                refresh_commit_list(context)
                 
                 DFM_ErrorHandler.log_operation_success("load_saved_branch", {
                     'object': mesh_name,
