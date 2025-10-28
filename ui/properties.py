@@ -110,6 +110,18 @@ def register_properties():
         ],
         default='AUTO'
     )
+    
+    # Comparison state tracking
+    bpy.types.Scene.dfm_comparison_active = bpy.props.BoolProperty(
+        name="Comparison Active",
+        default=False,
+        description="Whether comparison mode is currently active"
+    )
+    bpy.types.Scene.dfm_comparison_object_name = bpy.props.StringProperty(
+        name="Comparison Object Name",
+        default="",
+        description="Name of the comparison object"
+    )
 
 
 def unregister_properties():
@@ -132,4 +144,6 @@ def unregister_properties():
     del bpy.types.Scene.dfm_import_materials
     del bpy.types.Scene.dfm_import_uv
     del bpy.types.Scene.dfm_import_mode
+    del bpy.types.Scene.dfm_comparison_active
+    del bpy.types.Scene.dfm_comparison_object_name
 
