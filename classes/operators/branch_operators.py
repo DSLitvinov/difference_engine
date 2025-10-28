@@ -104,7 +104,7 @@ class DFM_SwitchBranchOperator(bpy.types.Operator):
         
         # Get branches
         branches = DFM_VersionManager.get_object_branches(active_obj.name)
-        current_branch = scene.dfm_current_branch or 'main'
+        current_branch = scene.dfm_current_branch or ""
         
         # Populate list
         for branch_data in branches:

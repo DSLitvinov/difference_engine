@@ -113,7 +113,7 @@ class DFM_UIHelpers:
         # Branch info
         row = col.row(align=True)
         row.label(text="Branch:", icon='OUTLINER')
-        row.label(text=scene.dfm_current_branch or 'main')
+        row.label(text=scene.dfm_current_branch or 'No branch')
         
         col.separator()
         
@@ -250,11 +250,14 @@ def load_saved_branch_on_startup(scene: bpy.types.Scene) -> None:
         # Load saved branch and refresh UI
         mesh_name = bpy.context.active_object.name
         saved_branch = DFM_VersionManager.load_current_branch(mesh_name)
-        if saved_branch and saved_branch != 'main':
+        if saved_branch:
             scene.dfm_current_branch = saved_branch
             # Refresh the branch list UI to show the loaded branch as current
             refresh_branch_list(bpy.context)
             logger.info(f"Loaded saved branch '{saved_branch}' for {mesh_name} on startup")
+        else:
+            # No saved branch, clear it
+            scene.dfm_current_branch = ""
     except Exception as e:
         # Silently handle errors to avoid spam in console
         logger.debug(f"Startup branch loading failed: {e}")

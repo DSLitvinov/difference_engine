@@ -31,6 +31,13 @@ class DFM_Current_Branch_PT_panel(bpy.types.Panel):
         scene = context.scene
         active_obj = context.active_object
         
+        # Check if mesh has any branches and clear current branch if not
+        if active_obj and active_obj.type == 'MESH':
+            from ..classes.version_manager import DFM_VersionManager
+            branches = DFM_VersionManager.get_object_branches(active_obj.name)
+            if not branches and scene.dfm_current_branch:
+                scene.dfm_current_branch = ""
+        
         # Current branch display
         box = layout.box()
         col = box.column(align=True)
@@ -39,7 +46,7 @@ class DFM_Current_Branch_PT_panel(bpy.types.Panel):
         
         row = col.row()
         row.scale_y = 1.2
-        row.label(text=scene.dfm_current_branch or 'main', icon='DISCLOSURE_TRI_RIGHT')
+        row.label(text=scene.dfm_current_branch or 'No branch', icon='DISCLOSURE_TRI_RIGHT')
         
         # Branch list section
         layout.separator()
