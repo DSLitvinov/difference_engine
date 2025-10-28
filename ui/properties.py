@@ -122,6 +122,11 @@ def register_properties():
         default="",
         description="Name of the comparison object"
     )
+    bpy.types.Scene.dfm_original_object_name = bpy.props.StringProperty(
+        name="Original Object Name",
+        default="",
+        description="Name of the original object before comparison"
+    )
 
 
 def unregister_properties():
@@ -146,4 +151,5 @@ def unregister_properties():
     del bpy.types.Scene.dfm_import_mode
     del bpy.types.Scene.dfm_comparison_active
     del bpy.types.Scene.dfm_comparison_object_name
+    del bpy.types.Scene.dfm_original_object_name
 

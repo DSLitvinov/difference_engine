@@ -89,6 +89,7 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
             self._remove_comparison_object(context)
             scene.dfm_comparison_active = False
             scene.dfm_comparison_object_name = ""
+            scene.dfm_original_object_name = ""
             self.report({'INFO'}, "Comparison mode disabled")
             return {'FINISHED'}
         
@@ -123,12 +124,16 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
                 obj.name = obj.name + "_compare"
                 obj.data.name = obj.data.name + "_compare"
                 
-                # Get current selection to determine offset direction
+                # Get current selection to determine offset direction and store original object
                 original_obj = None
                 for o in context.selected_objects:
                     if "_compare" not in o.name:
                         original_obj = o
                         break
+                
+                # Store the original object name for later selection
+                if original_obj:
+                    scene.dfm_original_object_name = original_obj.name
                 
                 # Offset based on original object if available
                 if original_obj:
@@ -205,6 +210,18 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
                         pass
             
             logger.info(f"Removed comparison object: {comparison_name}")
+            
+            # Select and activate the original object
+            original_name = scene.dfm_original_object_name
+            if original_name and original_name in bpy.data.objects:
+                original_obj = bpy.data.objects[original_name]
+                # Deselect all
+                for o in context.selected_objects:
+                    o.select_set(False)
+                # Select and activate original object
+                original_obj.select_set(True)
+                context.view_layer.objects.active = original_obj
+                logger.info(f"Switched back to original object: {original_name}")
         
         # Clean up any orphaned data
         self._cleanup_orphaned_data()
