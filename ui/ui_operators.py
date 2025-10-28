@@ -21,13 +21,24 @@ class DFM_RefreshCommits_OT_operator(bpy.types.Operator):
         try:
             DFM_ErrorHandler.log_operation_start("refresh_commits")
             
+            active_obj = context.active_object
+            scene = context.scene
+            
+            if not active_obj or active_obj.type != 'MESH':
+                raise DFM_Error("Please select a mesh object", DFM_ErrorType.VALIDATION_ERROR)
+            
+            # Check if we have a current branch
+            current_branch = scene.dfm_current_branch or ""
+            if not current_branch:
+                self.report({'WARNING'}, "No current branch selected. Please select a branch first.")
+                return {'CANCELLED'}
+            
             if refresh_commit_list(context):
                 # Track which object we loaded for
-                active_obj = context.active_object
-                if active_obj:
-                    context.scene["dfm_last_obj_name"] = active_obj.name
+                context.scene["dfm_last_obj_name"] = active_obj.name
                 
-                DFM_ErrorHandler.log_operation_success("refresh_commits", {'object': active_obj.name if active_obj else 'None'})
+                DFM_ErrorHandler.log_operation_success("refresh_commits", {'object': active_obj.name})
+                self.report({'INFO'}, f"Refreshed history for branch '{current_branch}'")
                 return {'FINISHED'}
             
             DFM_ErrorHandler.log_operation_failure("refresh_commits", 

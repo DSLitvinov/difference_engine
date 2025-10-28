@@ -124,10 +124,18 @@ class DFM_History_PT_panel(bpy.types.Panel):
             box.label(text="Click 'Refresh History' to load versions", icon='HAND')
             return
         
+        # Check if we have a current branch
+        current_branch = scene.dfm_current_branch or ""
+        if not current_branch:
+            box = layout.box()
+            box.label(text="No branch selected", icon='ERROR')
+            box.label(text="Please select a branch first", icon='HAND')
+            return
+        
         # Check if we have commits
         if len(scene.dfm_commit_list) == 0:
             box = layout.box()
-            box.label(text="No versions saved yet", icon='INFO')
+            box.label(text=f"No versions in branch '{current_branch}'", icon='INFO')
             box.label(text="Click 'Refresh History' to load", icon='HAND')
             return
         
