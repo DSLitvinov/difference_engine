@@ -157,6 +157,10 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
             return {'FINISHED'}
         
         # Toggle ON: Create comparison object
+        # Store reference to original object BEFORE creating comparison
+        original_obj = context.active_object
+        original_obj_name = original_obj.name if original_obj else None
+        
         # Load commit info
         commit_file = os.path.join(self.commit_path, "commit.json")
         commit_name = "Version"
@@ -180,40 +184,46 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
         )
         
         if result == {'FINISHED'}:
-            # Offset the comparison object
-            if context.active_object:
-                obj = context.active_object
+            # Get the newly created comparison object
+            comparison_obj = context.active_object
+            
+            if comparison_obj:
                 # Add "_compare" suffix to name for easy identification
-                obj.name = obj.name + "_compare"
-                obj.data.name = obj.data.name + "_compare"
-                
-                # Get current selection to determine offset direction and store original object
-                original_obj = None
-                for o in context.selected_objects:
-                    if "_compare" not in o.name:
-                        original_obj = o
-                        break
+                comparison_obj.name = comparison_obj.name + "_compare"
+                comparison_obj.data.name = comparison_obj.data.name + "_compare"
                 
                 # Store the original object name for later selection
-                if original_obj:
-                    scene.dfm_original_object_name = original_obj.name
+                if original_obj_name:
+                    scene.dfm_original_object_name = original_obj_name
                 
                 # Offset based on original object if available
                 if original_obj:
-                    obj.location.x = original_obj.location.x + self.offset_distance
-                    obj.location.y = original_obj.location.y
-                    obj.location.z = original_obj.location.z
+                    comparison_obj.location.x = original_obj.location.x + self.offset_distance
+                    comparison_obj.location.y = original_obj.location.y
+                    comparison_obj.location.z = original_obj.location.z
                 else:
                     # Default offset if no comparison available
-                    obj.location.x += self.offset_distance
+                    comparison_obj.location.x += self.offset_distance
                 
                 # Make it slightly transparent for visual comparison
-                if obj.active_material:
-                    obj.active_material.use_nodes = True
+                if comparison_obj.active_material:
+                    comparison_obj.active_material.use_nodes = True
                 
                 # Store comparison state
                 scene.dfm_comparison_active = True
-                scene.dfm_comparison_object_name = obj.name
+                scene.dfm_comparison_object_name = comparison_obj.name
+                
+                # IMPORTANT: Restore focus to original object
+                if original_obj and original_obj_name in bpy.data.objects:
+                    # Deselect all objects
+                    for obj in context.selected_objects:
+                        obj.select_set(False)
+                    
+                    # Select and activate the original object
+                    original_obj.select_set(True)
+                    context.view_layer.objects.active = original_obj
+                    
+                    logger.info(f"Restored focus to original object: {original_obj_name}")
                 
                 logger.info(f"Loaded comparison version '{commit_name}' with offset {self.offset_distance}")
                 self.report({'INFO'}, f"Comparison mode enabled: {commit_name} (offset +{self.offset_distance})")
@@ -285,6 +295,8 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
                 original_obj.select_set(True)
                 context.view_layer.objects.active = original_obj
                 logger.info(f"Switched back to original object: {original_name}")
+            else:
+                logger.warning(f"Original object '{original_name}' not found, keeping current selection")
         
         # Clean up any orphaned data
         self._cleanup_orphaned_data()

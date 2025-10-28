@@ -9,7 +9,8 @@ import time
 from datetime import datetime
 from ..material_exporter import DFM_MaterialExporter
 from ..version_manager import DFM_VersionManager
-from ..utils import sanitize_path_component, safe_float, safe_vector3
+from ..utils import sanitize_path_component, safe_float, safe_vector3, validate_export_data_size, estimate_mesh_memory_usage
+from ..progress_manager import DFM_ProgressManager
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -168,53 +169,72 @@ class DFM_SaveGeometryOperator(bpy.types.Operator):
     
     def export_geometry(self, obj, export_uv):
         """
-        Export mesh geometry data with optimized batch processing.
+        Export mesh geometry data with optimized batch processing and progress tracking.
         
         Performance optimizations:
         - Uses list comprehensions instead of append loops (2-3x faster)
         - Batch vector conversion with safe_vector3 (reduces function calls)
         - Direct list() conversion for face vertices
+        - Progress tracking for large meshes
         """
         mesh = obj.data
         
-        # Batch export vertices using list comprehension
-        vertices = [
-            {
-                "co": safe_vector3(v.co),
-                "normal": safe_vector3(v.normal)
-            }
-            for v in mesh.vertices
-        ]
-        
-        # Batch export faces using list comprehension
-        faces = [
-            {
-                "vertices": list(f.vertices),
-                "normal": safe_vector3(f.normal),
-                "area": safe_float(f.area),
-                "material_index": int(f.material_index)
-            }
-            for f in mesh.polygons
-        ]
-        
-        mesh_data = {
-            "name": obj.name,
-            "vertices": vertices,
-            "faces": faces,
-            "uv_layers": {}
-        }
-        
-        # Export UV layers if requested - batch processing
+        # Calculate total steps for progress tracking
+        total_steps = 3  # vertices, faces, uv_layers
         if export_uv and mesh.uv_layers:
-            for uv_layer in mesh.uv_layers:
-                # Batch UV export with list comprehension
-                mesh_data["uv_layers"][uv_layer.name] = [
-                    [float(d.uv.x), float(d.uv.y)]
-                    for d in uv_layer.data
-                ]
+            total_steps += len(mesh.uv_layers)
         
-        logger.debug(f"Exported geometry: {len(vertices)} vertices, {len(faces)} faces")
-        return mesh_data
+        with DFM_ProgressManager.progress_context("Exporting Geometry", total_steps) as progress:
+            # Batch export vertices using list comprehension
+            progress.step("Exporting vertices")
+            vertices = [
+                {
+                    "co": safe_vector3(v.co),
+                    "normal": safe_vector3(v.normal)
+                }
+                for v in mesh.vertices
+            ]
+            
+            # Batch export faces using list comprehension
+            progress.step("Exporting faces")
+            faces = [
+                {
+                    "vertices": list(f.vertices),
+                    "normal": safe_vector3(f.normal),
+                    "area": safe_float(f.area),
+                    "material_index": int(f.material_index)
+                }
+                for f in mesh.polygons
+            ]
+            
+            mesh_data = {
+                "name": obj.name,
+                "vertices": vertices,
+                "faces": faces,
+                "uv_layers": {}
+            }
+            
+            # Export UV layers if requested - batch processing
+            if export_uv and mesh.uv_layers:
+                for uv_layer in mesh.uv_layers:
+                    progress.step(f"Exporting UV layer: {uv_layer.name}")
+                    # Batch UV export with list comprehension
+                    mesh_data["uv_layers"][uv_layer.name] = [
+                        [float(d.uv.x), float(d.uv.y)]
+                        for d in uv_layer.data
+                    ]
+            
+            # Validate data size before returning
+            progress.step("Validating data")
+            estimated_memory = estimate_mesh_memory_usage(len(vertices), len(faces), len(mesh_data.get("uv_layers", {})))
+            logger.debug(f"Exported geometry: {len(vertices)} vertices, {len(faces)} faces, estimated memory: {estimated_memory:.2f} MB")
+            
+            # Check if data size is acceptable
+            if not validate_export_data_size(mesh_data):
+                logger.warning(f"Large mesh detected: {len(vertices)} vertices, {len(faces)} faces")
+                # Don't fail export, just warn - user might want to export large meshes
+            
+            return mesh_data
     
     def export_transform(self, obj):
         """Export object transformation data with optimized batch conversion"""

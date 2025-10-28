@@ -1,7 +1,7 @@
 schema_version = "1.0.0"
 id = "difference_engine"
 name = "Difference Engine"
-version = "0.0.1"
+version = "0.0.2"
 tagline = "Version control"
 maintainer = "Dmitry Litvinov <nopomuk@yandex.ru>"
 type = "add-on"

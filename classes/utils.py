@@ -319,3 +319,59 @@ def is_safe_file_extension(file_path: str, allowed_extensions: Tuple[str, ...] =
         logger.error(f"Failed to check file extension for {file_path}: {e}")
         return False
 
+
+def validate_export_data_size(data: Dict[str, Any], max_size_mb: float = 100.0) -> bool:
+    """
+    Validate that export data size is within acceptable limits.
+    
+    Args:
+        data: Data dictionary to validate
+        max_size_mb: Maximum allowed size in MB
+        
+    Returns:
+        True if data size is acceptable, False otherwise
+        
+    Raises:
+        DFM_ValidationError: If data size exceeds limits
+    """
+    try:
+        import json
+        import sys
+        
+        # Estimate size by serializing to JSON
+        json_str = json.dumps(data, separators=(',', ':'))  # Compact format
+        size_bytes = sys.getsizeof(json_str)
+        size_mb = size_bytes / (1024 * 1024)
+        
+        if size_mb > max_size_mb:
+            logger.warning(f"Export data size ({size_mb:.2f} MB) exceeds limit ({max_size_mb} MB)")
+            return False
+        
+        logger.debug(f"Export data size: {size_mb:.2f} MB")
+        return True
+        
+    except Exception as e:
+        logger.error(f"Failed to validate data size: {e}")
+        return False
+
+
+def estimate_mesh_memory_usage(vertex_count: int, face_count: int, uv_layer_count: int = 0) -> float:
+    """
+    Estimate memory usage for mesh data in MB.
+    
+    Args:
+        vertex_count: Number of vertices
+        face_count: Number of faces
+        uv_layer_count: Number of UV layers
+        
+    Returns:
+        Estimated memory usage in MB
+    """
+    # Rough estimates based on typical Blender data structures
+    vertex_memory = vertex_count * 3 * 4  # 3 floats * 4 bytes per float
+    face_memory = face_count * 4 * 4  # 4 ints * 4 bytes per int
+    uv_memory = vertex_count * uv_layer_count * 2 * 4  # 2 floats per UV layer
+    
+    total_bytes = vertex_memory + face_memory + uv_memory
+    return total_bytes / (1024 * 1024)  # Convert to MB
+

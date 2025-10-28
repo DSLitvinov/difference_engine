@@ -6,7 +6,7 @@ import json
 import os
 import shutil
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union, Tuple
 from .utils import convert_to_json_serializable, validate_file_path, validate_directory_path, is_safe_file_extension
 from .error_handler import DFM_ErrorHandler, DFM_Error, DFM_ErrorType, error_handler_decorator
 
@@ -23,17 +23,48 @@ class DFM_MaterialExporter:
         """
         Export material to JSON and copy textures.
         
+        This function exports a Blender material including all its properties,
+        node tree structure, and associated textures to a specified directory.
+        It handles both simple materials and complex node-based materials with
+        full fidelity preservation.
+        
         Args:
-            material: Blender material object to export
-            export_path: Directory path where to export the material
-            
+            material: Blender material object to export. Must be a valid
+                     bpy.types.Material instance.
+            export_path: Directory path where to export the material.
+                        Directory will be created if it doesn't exist.
+                        Supports both relative and absolute paths.
+        
         Returns:
-            Name of the exported material file, or None if export failed
-            
+            Name of the exported material file (e.g., "material_MyMaterial.json"),
+            or None if export failed.
+        
         Raises:
-            DFM_ValidationError: If input parameters are invalid
-            DFM_FileOperationError: If file operations fail
-            DFM_MaterialError: If material export fails
+            DFM_ValidationError: If input parameters are invalid (None material,
+                               empty export path, etc.)
+            DFM_FileOperationError: If file operations fail (permission denied,
+                                  disk full, invalid path, etc.)
+            DFM_MaterialError: If material export fails (corrupted material data,
+                              unsupported material types, etc.)
+        
+        Example:
+            >>> import bpy
+            >>> from classes.material_exporter import DFM_MaterialExporter
+            >>> 
+            >>> # Get a material from the active object
+            >>> obj = bpy.context.active_object
+            >>> material = obj.data.materials[0]
+            >>> 
+            >>> # Export the material
+            >>> exporter = DFM_MaterialExporter()
+            >>> result = exporter.export_material(material, "/path/to/export")
+            >>> print(result)  # "material_MyMaterial.json"
+        
+        Note:
+            - Textures are automatically copied to a "textures" subdirectory
+            - Packed images are saved as PNG files
+            - External textures are copied with their original format
+            - Node groups are referenced by name (must exist in target blend file)
         """
         DFM_ErrorHandler.log_operation_start("export_material", {
             'material_name': material.name if material else 'None',

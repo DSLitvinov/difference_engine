@@ -5,7 +5,7 @@ import bpy
 import json
 import os
 import logging
-from typing import Optional, Dict, Any, List
+from typing import Optional, Dict, Any, List, Union, Tuple
 
 # Setup logging
 logger = logging.getLogger(__name__)
@@ -33,14 +33,49 @@ class DFM_MaterialImporter:
         """
         Import material from JSON and load textures.
         
-        Reuses existing materials if found, otherwise creates new ones.
+        This function imports a previously exported material from a JSON file,
+        recreating the material with all its properties, node tree structure,
+        and textures. It handles both simple materials and complex node-based
+        materials with full fidelity restoration.
+        
+        The function reuses existing materials if found (based on name with
+        "tmp_" prefix), otherwise creates new ones to avoid conflicts.
         
         Args:
-            material_file: Path to material JSON file
-            import_path: Base path for texture files
-            
+            material_file: Path to material JSON file. Must be a valid JSON
+                          file created by export_material().
+            import_path: Base path for texture files. Textures will be loaded
+                        from the "textures" subdirectory relative to this path.
+        
         Returns:
-            Material object or None if import fails
+            Material object if import successful, None if import failed.
+            Returns existing material if one with the same name already exists.
+        
+        Raises:
+            FileNotFoundError: If material_file doesn't exist
+            json.JSONDecodeError: If material_file contains invalid JSON
+            ValueError: If material data is corrupted or incomplete
+        
+        Example:
+            >>> from classes.material_importer import DFM_MaterialImporter
+            >>> 
+            >>> # Import a material
+            >>> material = DFM_MaterialImporter.import_material(
+            ...     "/path/to/material_MyMaterial.json",
+            ...     "/path/to/import/directory"
+            ... )
+            >>> 
+            >>> if material:
+            ...     print(f"Successfully imported: {material.name}")
+            ...     # Apply to object
+            ...     obj.data.materials.append(material)
+        
+        Note:
+            - Imported materials are prefixed with "tmp_" to avoid conflicts
+            - Textures are loaded from "textures" subdirectory
+            - Large textures (>50MB) will generate warnings
+            - Node groups must exist in the target blend file
+            - Image caching prevents duplicate texture loading
         """
         try:
             logger.info(f"Importing material from: {material_file}")
@@ -180,9 +215,15 @@ class DFM_MaterialImporter:
                                 logger.debug(f"Reusing cached texture: {texture_file}")
                                 # Ensure the image filepath is set correctly
                                 image.filepath = texture_path
-                                # Reload the image data to ensure it's valid
-                                image.reload()
+                                # Only reload if the file has changed
+                                if not image.is_dirty:
+                                    image.reload()
                             else:
+                                # Check file size before loading to prevent memory issues
+                                file_size_mb = os.path.getsize(texture_path) / (1024 * 1024)
+                                if file_size_mb > 50:  # Warn for large textures
+                                    logger.warning(f"Loading large texture: {texture_file} ({file_size_mb:.1f} MB)")
+                                
                                 image = bpy.data.images.load(texture_path)
                                 logger.debug(f"Loaded new texture: {texture_file} from {texture_path}")
                             
@@ -352,4 +393,48 @@ class DFM_MaterialImporter:
                         logger.warning(f"Node not found: {link_data['to_node']}")
             except Exception as e:
                 logger.warning(f"Failed to create link: {e}")
+    
+    @staticmethod
+    def cleanup_unused_images() -> int:
+        """
+        Clean up unused images from Blender's data to free memory.
+        
+        Returns:
+            Number of images removed
+        """
+        removed_count = 0
+        try:
+            # Get all images that are not used by any material
+            unused_images = []
+            for image in bpy.data.images:
+                # Check if image is used by any material
+                is_used = False
+                for material in bpy.data.materials:
+                    if material.use_nodes and material.node_tree:
+                        for node in material.node_tree.nodes:
+                            if hasattr(node, 'image') and node.image == image:
+                                is_used = True
+                                break
+                    if is_used:
+                        break
+                
+                if not is_used and not image.users:
+                    unused_images.append(image)
+            
+            # Remove unused images
+            for image in unused_images:
+                try:
+                    bpy.data.images.remove(image)
+                    removed_count += 1
+                    logger.debug(f"Removed unused image: {image.name}")
+                except Exception as e:
+                    logger.warning(f"Failed to remove image {image.name}: {e}")
+            
+            if removed_count > 0:
+                logger.info(f"Cleaned up {removed_count} unused images")
+            
+        except Exception as e:
+            logger.error(f"Failed to cleanup unused images: {e}")
+        
+        return removed_count
 

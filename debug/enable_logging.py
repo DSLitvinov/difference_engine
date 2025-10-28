@@ -22,11 +22,16 @@ logging.basicConfig(
 addon_modules = [
     'classes.material_exporter',
     'classes.material_importer',
-    'classes.delta_exporter',
     'classes.version_manager',
+    'classes.migration',
     'classes.utils',
     'classes.operators.export_operator',
     'classes.operators.import_operator',
+    'classes.operators.version_operators',
+    'classes.operators.branch_operators',
+    'classes.operators.ui_operators',
+    'classes.error_handler',
+    'classes.config',
 ]
 
 for module_name in addon_modules:

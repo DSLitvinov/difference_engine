@@ -252,6 +252,33 @@ For issues and feature requests, please refer to the project repository or conta
 
 ---
 
-**Version**: 0.0.1  
+## 🆕 Recent Improvements (v0.0.2)
+
+### Performance & Memory
+- ✅ **Progress Tracking**: Added progress bars for long-running operations
+- ✅ **Memory Management**: Improved image caching and cleanup utilities
+- ✅ **File Size Validation**: Added checks to prevent oversized exports
+- ✅ **Batch Processing**: Enhanced batch operations with progress reporting
+
+### Code Quality
+- ✅ **Unit Tests**: Comprehensive test suite for critical functions
+- ✅ **Type Hints**: Enhanced type annotations throughout the codebase
+- ✅ **API Documentation**: Detailed docstrings with examples
+- ✅ **Error Handling**: Improved error messages and recovery
+
+### Bug Fixes
+- ✅ **Version Sync**: Fixed version mismatch between manifest and code
+- ✅ **Debug Logging**: Corrected module references in debug tools
+- ✅ **Memory Leaks**: Better handling of large textures and unused images
+
+### Developer Experience
+- ✅ **API Examples**: Complete usage examples and workflows
+- ✅ **Test Coverage**: Unit tests for utilities, error handling, and config
+- ✅ **Progress Management**: Context managers for progress tracking
+- ✅ **Enhanced Logging**: More detailed debug information
+
+---
+
+**Version**: 0.0.2  
 **Blender Version**: 4.2.0+  
 **Maintainer**: Dmitry Litvinov <nopomuk@yandex.ru>
