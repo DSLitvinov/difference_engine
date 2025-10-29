@@ -114,11 +114,6 @@ class DFM_UIHelpers:
         row = col.row(align=True)
         row.label(text="Branch:", icon='OUTLINER')
         row.label(text=scene.dfm_current_branch or 'No branch')
-        
-        col.separator()
-        
-        # Auto-compression option
-        col.prop(scene, "dfm_auto_snapshot", text="Auto-compress Old Versions", icon='PACKAGE')
     
     @staticmethod
     def draw_commit_section(layout: bpy.types.UILayout, scene: bpy.types.Scene) -> None:
@@ -131,6 +126,10 @@ class DFM_UIHelpers:
         col.separator()
         col.label(text="Message:", icon='WORDWRAP_ON')
         col.prop(scene, "dfm_commit_message", text="")
+        col.separator()
+        
+        # Auto-compression option
+        col.prop(scene, "dfm_auto_snapshot", text="Auto-compress Old Versions", icon='PACKAGE')
     
     @staticmethod
     def draw_export_button(layout: bpy.types.UILayout, scene: bpy.types.Scene) -> None:

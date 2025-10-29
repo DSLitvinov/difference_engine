@@ -41,6 +41,9 @@ class DFM_Export_PT_panel(bpy.types.Panel):
         # Export options
         DFM_UIHelpers.draw_export_options(layout, scene)
         
+        # Branch info (show which branch user is committing to)
+        DFM_UIHelpers.draw_version_control(layout, scene)
+        
         # Commit section
         DFM_UIHelpers.draw_commit_section(layout, scene)
         
@@ -110,9 +113,6 @@ class DFM_History_PT_panel(bpy.types.Panel):
         # Selected commit details
         if scene.dfm_commit_list and 0 <= scene.dfm_commit_list_index < len(scene.dfm_commit_list):
             self.draw_commit_details(layout, scene)
-        
-        # Version Control section (at the end)
-        DFM_UIHelpers.draw_version_control(layout, scene)
     
     def draw_commit_details(self, layout: bpy.types.UILayout, scene: bpy.types.Scene) -> None:
         """Draw details for selected commit"""
