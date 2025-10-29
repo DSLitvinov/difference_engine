@@ -101,6 +101,9 @@ class DFM_History_PT_panel(bpy.types.Panel):
             box.label(text="Click 'Refresh History' to load", icon='HAND')
             return
         
+        # Branch indicator before commit list
+        DFM_UIHelpers.draw_version_control(layout, scene)
+        
         # UIList for commits
         row = layout.row()
         row.template_list(
@@ -122,13 +125,10 @@ class DFM_History_PT_panel(bpy.types.Panel):
         box = layout.box()
         col = box.column(align=True)
         
-        if commit.tag:
-            row = col.row()
-            row.label(text=f"Tag: {commit.tag}", icon='BOOKMARKS')
-        
+        # Tag info (shown before message)
+        tag_text = f"Tag: {commit.tag}" if getattr(commit, 'tag', '') else "Tag: —"
         row = col.row()
-        row.label(text=f"Branch: {commit.branch}", icon='OUTLINER')
-        
+        row.label(text=tag_text, icon='BOOKMARKS')
         col.separator()
         
         # Full message
