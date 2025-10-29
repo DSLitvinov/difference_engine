@@ -7,7 +7,6 @@ from . import properties
 from .ui_helpers import load_saved_branch_on_startup, load_saved_branch_on_object_change
 from .ui_lists import DFM_CommitItem, DFM_BranchItem, DFM_CommitList_UL_items, DFM_BranchList_UL_items
 from .ui_panels import (
-    DFM_Current_Branch_PT_panel,    
     DFM_Export_PT_panel,
     DFM_History_PT_panel,
     DFM_VersionImport_PT_panel,
@@ -41,7 +40,6 @@ classes = [
     DFM_LoadSavedBranch_OT_operator,
     
     # UI Panels 
-    DFM_Current_Branch_PT_panel,
     DFM_Export_PT_panel,
     DFM_History_PT_panel,
     DFM_VersionImport_PT_panel,
