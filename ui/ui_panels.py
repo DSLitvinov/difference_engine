@@ -142,13 +142,7 @@ class DFM_History_PT_panel(bpy.types.Panel):
     def draw_import_section(self, layout: bpy.types.UILayout, scene: bpy.types.Scene, context: bpy.types.Context) -> None:
         """Draw import UI/actions for the selected commit (moved from DFM_VersionImport_PT_panel)"""
         commit = scene.dfm_commit_list[scene.dfm_commit_list_index]
-        
-        # Show which commit is selected
-        box = layout.box()
-        col = box.column(align=True)
-        col.label(text=f"Version: {commit.timestamp}", icon='TIME')
-        if getattr(commit, 'tag', None):
-            col.label(text=f"Tag: {commit.tag}", icon='BOOKMARKS')
+    
         
         # Import mode
         box = layout.box()
@@ -218,8 +212,6 @@ class DFM_History_PT_panel(bpy.types.Panel):
         op = row.operator("object.dfm_delete_version", text="Delete This Version", icon='TRASH')
         op.commit_path = commit.commit_path
         op.commit_timestamp = commit.timestamp
-
-
 
 
 class DFM_Branches_PT_panel(bpy.types.Panel):
