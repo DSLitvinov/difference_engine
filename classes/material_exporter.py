@@ -304,7 +304,12 @@ class DFM_MaterialExporter:
                     logger.warning(f"Invalid destination path for packed image: {dest_path}")
                     return
                 
-                node.image.save_render(dest_path)
+                # Save packed image directly to destination
+                try:
+                    node.image.save(dest_path)
+                except TypeError:
+                    # Fallback for older API signatures
+                    node.image.save(filepath=dest_path)
                 node_data["copied_texture"] = image_filename
                 node_data["was_packed"] = True
                 

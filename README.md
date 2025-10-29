@@ -55,7 +55,6 @@ difference_engine/
 ├── debug/                     # Debug utilities
 │   ├── enable_logging.py
 │   └── README.md
-└── INDEX_STRUCTURE.md        # Index structure documentation
 ```
 
 ## 🛠️ Architecture

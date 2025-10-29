@@ -64,7 +64,11 @@ class DFM_VersionManager:
         except OSError as e:
             logger.error(f"Failed to read mesh directory {mesh_dir}: {e}")
             return []
-        
+        # Sort by timestamp (newest first) with safe default
+        try:
+            history.sort(key=lambda x: x.get('timestamp', '0000-00-00_00-00-00'), reverse=True)
+        except Exception as e:
+            logger.debug(f"Failed to sort history by timestamp: {e}")
         return history
     
     @staticmethod
@@ -142,15 +146,19 @@ class DFM_VersionManager:
                         commit_count = 0
                         last_commit = ""
                         
-                        for commit_dir in os.listdir(branch_path):
+                        commit_dirs = [d for d in os.listdir(branch_path) if os.path.isdir(os.path.join(branch_path, d))]
+                        for commit_dir in commit_dirs:
                             commit_path = os.path.join(branch_path, commit_dir)
                             if os.path.isdir(commit_path):
                                 commit_file = os.path.join(commit_path, "commit.json")
                                 if os.path.exists(commit_file):
                                     commit_count += 1
-                                    # Get timestamp for last commit (directories are sorted by name which is timestamp)
-                                    if not last_commit:
-                                        last_commit = commit_dir
+                        # Determine last commit by max timestamp-like dir name
+                        if commit_dirs:
+                            try:
+                                last_commit = max(commit_dirs)
+                            except Exception:
+                                last_commit = commit_dirs[0]
                         
                         branches.append({
                             'name': branch_name,

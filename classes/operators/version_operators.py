@@ -308,11 +308,6 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
             if not material.users:
                 bpy.data.materials.remove(material)
         
-        # Remove textures that are no longer used
-        for texture in list(bpy.data.textures):
-            if not texture.users:
-                bpy.data.textures.remove(texture)
-        
         # Remove images that are no longer used
         for image in list(bpy.data.images):
             if not image.users:

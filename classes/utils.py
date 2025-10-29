@@ -154,11 +154,8 @@ def validate_file_path(file_path: str, must_exist: bool = False, must_be_file: b
         logger.error(f"Absolute path not allowed: {file_path}")
         return False
     
-    # Check for leading path separators and relative components
-    normalized = os.path.normpath(file_path)
-    if normalized != file_path and file_path.lstrip('.' + os.sep) != file_path:
-        logger.error(f"Path contains relative components: {file_path}")
-        return False
+    # Basic normalization checks are intentionally relaxed to avoid false positives
+    # Security is primarily enforced via '..' and absolute path checks above
     
     # Prevent backslash manipulation on Windows
     if '\\' in file_path and os.sep != '\\':

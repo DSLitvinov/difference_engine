@@ -40,6 +40,12 @@ class DFM_ProgressManager:
         self.start_time = None
         
         # Initialize progress
+        # Begin Blender progress range [0, total_steps]
+        try:
+            if hasattr(bpy.context, 'window_manager'):
+                bpy.context.window_manager.progress_begin(0, max(1, total_steps))
+        except Exception as e:
+            logger.debug(f"Failed to begin Blender progress: {e}")
         self._update_progress(0, f"Starting {operation_name}")
     
     def _update_progress(self, step: int, message: str = ""):
@@ -47,10 +53,10 @@ class DFM_ProgressManager:
         self.current_step = step
         progress_percent = (step / self.total_steps) * 100 if self.total_steps > 0 else 0
         
-        # Update Blender's progress bar if available
+        # Update Blender's progress bar with step value in configured range
         try:
             if hasattr(bpy.context, 'window_manager'):
-                bpy.context.window_manager.progress_update(progress_percent)
+                bpy.context.window_manager.progress_update(step)
         except Exception as e:
             logger.debug(f"Failed to update Blender progress: {e}")
         

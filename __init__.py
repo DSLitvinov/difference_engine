@@ -6,7 +6,7 @@ bl_info = {
     "location": "View3D > UI > Difference Machine",
     "description": "Version control system for 3D models",
     "category": "3D View",
-    "doc_url": "https://github.com/DSLitvinov/",
+    "doc_url": "https://github.com/DSLitvinov/difference_engine",
 }
 
 from .ui import ui_main

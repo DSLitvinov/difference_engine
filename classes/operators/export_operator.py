@@ -104,7 +104,7 @@ class DFM_SaveGeometryOperator(bpy.types.Operator):
                     with open(geometry_file, 'w') as f:
                         json.dump(mesh_data, f)
                     commit_data["files"]["geometry"] = "geometry.json"
-                except TypeError as e:
+                except Exception as e:
                     self.report({'ERROR'}, f"Geometry export error: {str(e)}")
                     raise
             
@@ -118,7 +118,7 @@ class DFM_SaveGeometryOperator(bpy.types.Operator):
                     with open(transform_file, 'w') as f:
                         json.dump(transform_data, f)
                     commit_data["files"]["transform"] = "transform.json"
-                except TypeError as e:
+                except Exception as e:
                     self.report({'ERROR'}, f"Transform export error: {str(e)}")
                     raise
             
@@ -134,7 +134,7 @@ class DFM_SaveGeometryOperator(bpy.types.Operator):
                     
                     if material_files:
                         commit_data["files"]["materials"] = material_files
-                except TypeError as e:
+                except Exception as e:
                     self.report({'ERROR'}, f"Material export error: {str(e)}")
                     raise
             
