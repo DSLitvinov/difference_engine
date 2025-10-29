@@ -204,42 +204,63 @@ class DFM_MaterialImporter:
             
             # Handle image texture nodes FIRST (before other properties that depend on image being loaded)
             if node_data.get('type') == 'TEX_IMAGE':
+                # Prefer copied texture placed into commit textures directory
                 texture_file = node_data.get('copied_texture')
+                candidate_paths = []
                 if texture_file:
-                    texture_path = os.path.join(textures_dir, texture_file)
-                    if os.path.exists(texture_path):
-                        try:
-                            # Check if image is already loaded (texture caching)
-                            image = bpy.data.images.get(texture_file)
-                            if image:
-                                logger.debug(f"Reusing cached texture: {texture_file}")
-                                # Ensure the image filepath is set correctly
-                                image.filepath = texture_path
-                                # Only reload if the file has changed
-                                if not image.is_dirty:
-                                    image.reload()
-                            else:
-                                # Check file size before loading to prevent memory issues
-                                file_size_mb = os.path.getsize(texture_path) / (1024 * 1024)
-                                if file_size_mb > 50:  # Warn for large textures
-                                    logger.warning(f"Loading large texture: {texture_file} ({file_size_mb:.1f} MB)")
-                                
-                                image = bpy.data.images.load(texture_path)
-                                logger.debug(f"Loaded new texture: {texture_file} from {texture_path}")
-                            
-                            # Assign image to node
-                            if hasattr(node, 'image'):
-                                node.image = image
-                                logger.debug(f"✓ Assigned texture {texture_file} to node {node.name}")
-                                logger.debug(f"  Image size: {image.size[0]}x{image.size[1]}, Filepath: {image.filepath}")
-                            else:
-                                logger.error(f"✗ Node {node.name} doesn't have 'image' attribute!")
-                        except Exception as e:
-                            logger.error(f"Failed to load texture {texture_path}: {str(e)}")
-                            import traceback
-                            logger.error(traceback.format_exc())
-                    else:
-                        logger.warning(f"Texture file not found: {texture_path}")
+                    candidate_paths.append(os.path.join(textures_dir, texture_file))
+                
+                # Fallback: use original exported image_file's basename
+                image_file_original = node_data.get('image_file')
+                if image_file_original:
+                    candidate_paths.append(os.path.join(textures_dir, os.path.basename(image_file_original)))
+                    # Also consider original absolute/relative path as a last resort
+                    candidate_paths.append(bpy.path.abspath(image_file_original))
+                
+                # Resolve first existing path
+                resolved_path = None
+                for candidate in candidate_paths:
+                    if candidate and isinstance(candidate, str) and os.path.exists(candidate):
+                        resolved_path = candidate
+                        break
+                
+                if not resolved_path:
+                    # Provide a concise yet informative log for debugging
+                    logger.warning(
+                        f"Texture not found for node '{node_data.get('name','')}'. "
+                        f"Tried: {', '.join([p for p in candidate_paths if p])}"
+                    )
+                else:
+                    try:
+                        file_size_mb = os.path.getsize(resolved_path) / (1024 * 1024)
+                        if file_size_mb > 50:
+                            logger.warning(f"Loading large texture: {os.path.basename(resolved_path)} ({file_size_mb:.1f} MB)")
+                        
+                        # Reuse cached image by filename when possible
+                        cached_name = os.path.basename(resolved_path)
+                        image = bpy.data.images.get(cached_name)
+                        if image:
+                            logger.debug(f"Reusing cached texture: {cached_name}")
+                            image.filepath = resolved_path
+                            # Force reload to ensure up-to-date display
+                            image.reload()
+                        else:
+                            image = bpy.data.images.load(resolved_path)
+                            logger.debug(f"Loaded new texture from {resolved_path}")
+                        
+                        # Assign image to node
+                        if hasattr(node, 'image'):
+                            node.image = image
+                            logger.debug(
+                                f"✓ Assigned texture {cached_name} to node {node.name} | "
+                                f"{image.size[0]}x{image.size[1]}"
+                            )
+                        else:
+                            logger.error(f"✗ Node {node.name} doesn't have 'image' attribute!")
+                    except Exception as e:
+                        logger.error(f"Failed to load texture {resolved_path}: {str(e)}")
+                        import traceback
+                        logger.error(traceback.format_exc())
             
             # Restore node properties (AFTER image is loaded for TEX_IMAGE nodes)
             if 'properties' in node_data:

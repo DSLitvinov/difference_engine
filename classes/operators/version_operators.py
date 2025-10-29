@@ -184,7 +184,7 @@ class DFM_CompareVersionsOperator(bpy.types.Operator):
         )
         
         if result == {'FINISHED'}:
-            # Get the newly created comparison object
+            # Get the newly created or duplicated comparison object
             comparison_obj = context.active_object
             
             if comparison_obj:
