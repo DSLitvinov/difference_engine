@@ -9,7 +9,6 @@ from .ui_lists import DFM_CommitItem, DFM_BranchItem, DFM_CommitList_UL_items, D
 from .ui_panels import (
     DFM_Export_PT_panel,
     DFM_History_PT_panel,
-    DFM_VersionImport_PT_panel,
     DFM_Branches_PT_panel
 )
 from .ui_operators import (
@@ -42,7 +41,6 @@ classes = [
     # UI Panels 
     DFM_Export_PT_panel,
     DFM_History_PT_panel,
-    DFM_VersionImport_PT_panel,
     DFM_Branches_PT_panel,
 ] + operator_classes
 

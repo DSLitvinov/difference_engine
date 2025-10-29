@@ -116,6 +116,8 @@ class DFM_History_PT_panel(bpy.types.Panel):
         # Selected commit details
         if scene.dfm_commit_list and 0 <= scene.dfm_commit_list_index < len(scene.dfm_commit_list):
             self.draw_commit_details(layout, scene)
+            # Import actions previously shown in DFM_VersionImport_PT_panel
+            self.draw_import_section(layout, scene, context)
     
     def draw_commit_details(self, layout: bpy.types.UILayout, scene: bpy.types.Scene) -> None:
         """Draw details for selected commit"""
@@ -137,38 +139,15 @@ class DFM_History_PT_panel(bpy.types.Panel):
         for line in message_lines[:3]:  # Max 3 lines
             col.label(text=line)
 
-
-class DFM_VersionImport_PT_panel(bpy.types.Panel):
-    """Import panel for selected version"""
-    bl_idname = 'DFM_PT_panel_version_import'
-    bl_space_type = 'VIEW_3D'
-    bl_region_type = 'UI'
-    bl_category = 'Difference Machine'
-    bl_label = 'Import Selected Version'
-    bl_parent_id = 'DFM_PT_panel_history'
-    bl_order = 0
-    bl_options = {'DEFAULT_CLOSED'}
-
-    @classmethod
-    def poll(cls, context: bpy.types.Context) -> bool:
-        scene = context.scene
-        active_obj = context.active_object
-        # Show only if we have a selected commit
-        return (active_obj and active_obj.type == 'MESH' and 
-                scene.dfm_commit_list and 
-                0 <= scene.dfm_commit_list_index < len(scene.dfm_commit_list))
-    
-    def draw(self, context: bpy.types.Context) -> None:
-        layout = self.layout
-        scene = context.scene
-        
+    def draw_import_section(self, layout: bpy.types.UILayout, scene: bpy.types.Scene, context: bpy.types.Context) -> None:
+        """Draw import UI/actions for the selected commit (moved from DFM_VersionImport_PT_panel)"""
         commit = scene.dfm_commit_list[scene.dfm_commit_list_index]
         
         # Show which commit is selected
         box = layout.box()
         col = box.column(align=True)
         col.label(text=f"Version: {commit.timestamp}", icon='TIME')
-        if commit.tag:
+        if getattr(commit, 'tag', None):
             col.label(text=f"Tag: {commit.tag}", icon='BOOKMARKS')
         
         # Import mode
@@ -239,6 +218,8 @@ class DFM_VersionImport_PT_panel(bpy.types.Panel):
         op = row.operator("object.dfm_delete_version", text="Delete This Version", icon='TRASH')
         op.commit_path = commit.commit_path
         op.commit_timestamp = commit.timestamp
+
+
 
 
 class DFM_Branches_PT_panel(bpy.types.Panel):
