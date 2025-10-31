@@ -242,11 +242,23 @@ def refresh_branch_list(context: bpy.types.Context) -> bool:
 def load_saved_branch_on_startup(scene: bpy.types.Scene) -> None:
     """Handler to load saved branch when Blender starts up"""
     try:
-        # Clear old UI lists first to prevent showing stale data
+        # FULL RESET: Clear ALL UI data to prevent showing stale data from .blend file
         if hasattr(scene, 'dfm_commit_list'):
             scene.dfm_commit_list.clear()
         if hasattr(scene, 'dfm_branch_list'):
             scene.dfm_branch_list.clear()
+        if hasattr(scene, 'dfm_current_branch'):
+            scene.dfm_current_branch = ""
+        if hasattr(scene, 'dfm_commit_list_index'):
+            scene.dfm_commit_list_index = 0
+        if hasattr(scene, 'dfm_branch_list_index'):
+            scene.dfm_branch_list_index = 0
+        if hasattr(scene, 'dfm_selected_commit_path'):
+            scene.dfm_selected_commit_path = ""
+        if hasattr(scene, 'dfm_commit_message'):
+            scene.dfm_commit_message = ""
+        if hasattr(scene, 'dfm_commit_tag'):
+            scene.dfm_commit_tag = ""
         
         # Only run if we have an active object and it's a mesh
         if not bpy.context.active_object or bpy.context.active_object.type != 'MESH':
