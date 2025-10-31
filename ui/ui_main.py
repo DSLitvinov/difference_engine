@@ -4,7 +4,7 @@ Main UI module for Difference Machine addon
 import bpy
 import logging
 from . import properties
-from .ui_helpers import load_saved_branch_on_startup, load_saved_branch_on_object_change, clear_caches, clear_all_scene_ui_data
+from .ui_helpers import load_saved_branch_on_startup, load_saved_branch_on_object_change, clear_caches
 from .ui_lists import DFM_CommitItem, DFM_BranchItem, DFM_CommitList_UL_items, DFM_BranchList_UL_items
 from .ui_panels import (
     DFM_Export_PT_panel,
@@ -66,12 +66,7 @@ def register():
         # Register branch list collection
         bpy.types.Scene.dfm_branch_list = bpy.props.CollectionProperty(type=DFM_BranchItem)
         
-        # Add handler to clear UI data BEFORE file loads (prevents showing stale data)
-        if not hasattr(bpy.app.handlers, 'load_pre'):
-            bpy.app.handlers.load_pre = []
-        bpy.app.handlers.load_pre.append(clear_all_scene_ui_data)
-        
-        # Add handler to load saved branch on Blender startup
+        # Add handler to load saved branch on Blender startup (clears old data first)
         bpy.app.handlers.load_post.append(load_saved_branch_on_startup)
         
         # Add handler to load saved branch when object changes
@@ -88,11 +83,6 @@ def unregister():
     """Unregister UI classes and properties"""
     try:
         logger.info("Unregistering Difference Engine UI components")
-        
-        # Remove load_pre handler if exists
-        if hasattr(bpy.app.handlers, 'load_pre'):
-            if clear_all_scene_ui_data in bpy.app.handlers.load_pre:
-                bpy.app.handlers.load_pre.remove(clear_all_scene_ui_data)
         
         # Remove startup handler
         if load_saved_branch_on_startup in bpy.app.handlers.load_post:

@@ -267,6 +267,10 @@ def clear_all_scene_ui_data():
 def load_saved_branch_on_startup(scene: bpy.types.Scene) -> None:
     """Handler to load saved branch when Blender starts up"""
     try:
+        # CRITICAL: Clear ALL UI data first to prevent showing stale data from .blend file
+        # This must happen BEFORE any other operations
+        clear_all_scene_ui_data()
+        
         # Only run if we have an active object and it's a mesh
         if not bpy.context.active_object or bpy.context.active_object.type != 'MESH':
             return
