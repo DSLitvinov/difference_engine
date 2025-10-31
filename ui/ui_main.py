@@ -50,6 +50,20 @@ def register():
     try:
         logger.info("Registering Difference Engine UI components")
         
+        # CRITICAL: Clear UI data from all scenes FIRST, before registering properties
+        # This prevents stale data from being displayed on startup
+        from .ui_helpers import clear_all_scene_ui_data
+        try:
+            for scene in bpy.data.scenes:
+                if hasattr(scene, 'dfm_commit_list'):
+                    scene.dfm_commit_list.clear()
+                if hasattr(scene, 'dfm_branch_list'):
+                    scene.dfm_branch_list.clear()
+                if hasattr(scene, 'dfm_current_branch'):
+                    scene.dfm_current_branch = ""
+        except Exception:
+            pass  # Ignore if properties don't exist yet
+        
         # Clear caches on reload
         clear_caches()
         
