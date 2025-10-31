@@ -317,3 +317,16 @@ def load_saved_branch_on_object_change(scene: bpy.types.Scene) -> None:
         logger.debug(f"Object change branch loading failed: {e}")
 
 
+def clear_caches():
+    """Clear all addon caches when reloading"""
+    global _last_loaded_object, _last_branch_update_time
+    
+    # Clear object tracking caches
+    _last_loaded_object = None
+    _last_branch_update_time = 0.0
+    
+    # Clear material importer image cache
+    from ..classes.material_importer import DFM_MaterialImporter
+    DFM_MaterialImporter._image_size_cache.clear()
+    
+    logger.info("Cleared all addon caches")

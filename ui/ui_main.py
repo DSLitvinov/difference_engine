@@ -4,7 +4,7 @@ Main UI module for Difference Machine addon
 import bpy
 import logging
 from . import properties
-from .ui_helpers import load_saved_branch_on_startup, load_saved_branch_on_object_change
+from .ui_helpers import load_saved_branch_on_startup, load_saved_branch_on_object_change, clear_caches
 from .ui_lists import DFM_CommitItem, DFM_BranchItem, DFM_CommitList_UL_items, DFM_BranchList_UL_items
 from .ui_panels import (
     DFM_Export_PT_panel,
@@ -49,6 +49,9 @@ def register():
     """Register UI classes and properties"""
     try:
         logger.info("Registering Difference Engine UI components")
+        
+        # Clear caches on reload
+        clear_caches()
         
         # Register properties first
         properties.register_properties()
