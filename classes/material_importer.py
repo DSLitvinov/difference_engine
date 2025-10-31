@@ -28,6 +28,9 @@ class DFM_MaterialImporter:
         # Add more special cases as needed
     }
     
+    # Cache for image sizes to avoid repeated os.path.getsize calls
+    _image_size_cache: Dict[str, float] = {}
+    
     @staticmethod
     def import_material(material_file: str, import_path: str) -> Optional[bpy.types.Material]:
         """
@@ -232,7 +235,13 @@ class DFM_MaterialImporter:
                     )
                 else:
                     try:
-                        file_size_mb = os.path.getsize(resolved_path) / (1024 * 1024)
+                        # Use cached file size if available
+                        if resolved_path in DFM_MaterialImporter._image_size_cache:
+                            file_size_mb = DFM_MaterialImporter._image_size_cache[resolved_path]
+                        else:
+                            file_size_mb = os.path.getsize(resolved_path) / (1024 * 1024)
+                            DFM_MaterialImporter._image_size_cache[resolved_path] = file_size_mb
+                        
                         if file_size_mb > 50:
                             logger.warning(f"Loading large texture: {os.path.basename(resolved_path)} ({file_size_mb:.1f} MB)")
                         
@@ -242,7 +251,7 @@ class DFM_MaterialImporter:
                         if image:
                             logger.debug(f"Reusing cached texture: {cached_name}")
                             image.filepath = resolved_path
-                            # Force reload to ensure up-to-date display
+                            # Only reload if file was modified
                             image.reload()
                         else:
                             image = bpy.data.images.load(resolved_path)

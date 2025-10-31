@@ -262,8 +262,9 @@ def load_saved_branch_on_startup(scene: bpy.types.Scene) -> None:
         logger.debug(f"Startup branch loading failed: {e}")
 
 
-# Global variable to track last loaded object
+# Global variables to track object changes
 _last_loaded_object: Optional[str] = None
+_last_branch_update_time: float = 0.0
 
 
 def load_saved_branch_on_object_change(scene: bpy.types.Scene) -> None:
@@ -273,10 +274,18 @@ def load_saved_branch_on_object_change(scene: bpy.types.Scene) -> None:
         if not bpy.context.active_object or bpy.context.active_object.type != 'MESH':
             return
         
-        global _last_loaded_object
+        global _last_loaded_object, _last_branch_update_time
         current_obj = bpy.context.active_object.name
         
-        # Always load branch info for new object (don't check if it changed)
+        # Throttle updates: only check once every 0.5 seconds
+        # This prevents excessive calls during frequent updates
+        import time
+        current_time = time.time()
+        if current_time - _last_branch_update_time < 0.5:
+            return
+        _last_branch_update_time = current_time
+        
+        # Only load branch info if object actually changed
         if current_obj != _last_loaded_object:
             mesh_name = current_obj
             

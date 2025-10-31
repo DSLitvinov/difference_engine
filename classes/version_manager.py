@@ -36,31 +36,35 @@ class DFM_VersionManager:
         
         history = []
         try:
-            for branch in os.listdir(mesh_dir):
-                branch_path = os.path.join(mesh_dir, branch)
-                if os.path.isdir(branch_path):
-                    try:
-                        for commit in os.listdir(branch_path):
-                            commit_path = os.path.join(branch_path, commit)
-                            commit_file = os.path.join(commit_path, "commit.json")
-                            
-                            if os.path.exists(commit_file):
-                                try:
-                                    with open(commit_file, 'r') as f:
-                                        commit_data = json.load(f)
-                                        # Validate required fields
-                                        if 'timestamp' not in commit_data:
-                                            logger.warning(f"Commit file missing timestamp: {commit_file}")
-                                            continue
-                                        commit_data['commit_path'] = commit_path
-                                        commit_data['branch'] = branch
-                                        history.append(commit_data)
-                                except (json.JSONDecodeError, IOError) as e:
-                                    logger.error(f"Failed to read commit file {commit_file}: {e}")
-                                    continue
-                    except OSError as e:
-                        logger.error(f"Failed to read branch directory {branch_path}: {e}")
-                        continue
+            # Use os.scandir for better performance
+            with os.scandir(mesh_dir) as entries:
+                for branch_entry in entries:
+                    if branch_entry.is_dir():
+                        branch = branch_entry.name
+                        branch_path = branch_entry.path
+                        try:
+                            with os.scandir(branch_path) as branch_entries:
+                                for commit_entry in branch_entries:
+                                    if commit_entry.is_dir():
+                                        commit_file = os.path.join(commit_entry.path, "commit.json")
+                                        
+                                        if os.path.exists(commit_file):
+                                            try:
+                                                with open(commit_file, 'r') as f:
+                                                    commit_data = json.load(f)
+                                                    # Validate required fields
+                                                    if 'timestamp' not in commit_data:
+                                                        logger.warning(f"Commit file missing timestamp: {commit_file}")
+                                                        continue
+                                                    commit_data['commit_path'] = commit_entry.path
+                                                    commit_data['branch'] = branch
+                                                    history.append(commit_data)
+                                            except (json.JSONDecodeError, IOError) as e:
+                                                logger.error(f"Failed to read commit file {commit_file}: {e}")
+                                                continue
+                        except OSError as e:
+                            logger.error(f"Failed to read branch directory {branch_path}: {e}")
+                            continue
         except OSError as e:
             logger.error(f"Failed to read mesh directory {mesh_dir}: {e}")
             return []
@@ -92,25 +96,26 @@ class DFM_VersionManager:
         
         history = []
         try:
-            for commit in os.listdir(branch_path):
-                commit_path = os.path.join(branch_path, commit)
-                if os.path.isdir(commit_path):
-                    commit_file = os.path.join(commit_path, "commit.json")
-                    
-                    if os.path.exists(commit_file):
-                        try:
-                            with open(commit_file, 'r') as f:
-                                commit_data = json.load(f)
-                                # Validate required fields
-                                if 'timestamp' not in commit_data:
-                                    logger.warning(f"Commit file missing timestamp: {commit_file}")
-                                    continue
-                                commit_data['commit_path'] = commit_path
-                                commit_data['branch'] = branch_name
-                                history.append(commit_data)
-                        except (json.JSONDecodeError, IOError) as e:
-                            logger.error(f"Failed to read commit file {commit_file}: {e}")
-                            continue
+            # Use os.scandir for better performance
+            with os.scandir(branch_path) as entries:
+                for entry in entries:
+                    if entry.is_dir():
+                        commit_file = os.path.join(entry.path, "commit.json")
+                        
+                        if os.path.exists(commit_file):
+                            try:
+                                with open(commit_file, 'r') as f:
+                                    commit_data = json.load(f)
+                                    # Validate required fields
+                                    if 'timestamp' not in commit_data:
+                                        logger.warning(f"Commit file missing timestamp: {commit_file}")
+                                        continue
+                                    commit_data['commit_path'] = entry.path
+                                    commit_data['branch'] = branch_name
+                                    history.append(commit_data)
+                            except (json.JSONDecodeError, IOError) as e:
+                                logger.error(f"Failed to read commit file {commit_file}: {e}")
+                                continue
         except OSError as e:
             logger.error(f"Failed to read branch directory {branch_path}: {e}")
             return []
@@ -138,37 +143,45 @@ class DFM_VersionManager:
         
         branches = []
         try:
-            for branch_name in os.listdir(mesh_dir):
-                branch_path = os.path.join(mesh_dir, branch_name)
-                if os.path.isdir(branch_path) and branch_name != '.backup':
-                    try:
-                        # Count commits in this branch
-                        commit_count = 0
-                        last_commit = ""
-                        
-                        commit_dirs = [d for d in os.listdir(branch_path) if os.path.isdir(os.path.join(branch_path, d))]
-                        for commit_dir in commit_dirs:
-                            commit_path = os.path.join(branch_path, commit_dir)
-                            if os.path.isdir(commit_path):
-                                commit_file = os.path.join(commit_path, "commit.json")
-                                if os.path.exists(commit_file):
-                                    commit_count += 1
-                        # Determine last commit by max timestamp-like dir name
-                        if commit_dirs:
+            # Use os.scandir for better performance than os.listdir
+            with os.scandir(mesh_dir) as entries:
+                for entry in entries:
+                    if entry.is_dir() and entry.name != '.backup':
+                        branch_name = entry.name
+                        branch_path = entry.path
+                        try:
+                            # Count commits in this branch using scandir
+                            commit_count = 0
+                            last_commit = ""
+                            commit_dirs = []
+                            
                             try:
-                                last_commit = max(commit_dirs)
-                            except Exception:
-                                last_commit = commit_dirs[0]
-                        
-                        branches.append({
-                            'name': branch_name,
-                            'commit_count': commit_count,
-                            'last_commit': last_commit
-                        })
-                        
-                    except OSError as e:
-                        logger.error(f"Failed to read branch directory {branch_path}: {e}")
-                        continue
+                                with os.scandir(branch_path) as branch_entries:
+                                    for branch_entry in branch_entries:
+                                        if branch_entry.is_dir():
+                                            commit_dirs.append(branch_entry.name)
+                                            commit_file = os.path.join(branch_entry.path, "commit.json")
+                                            if os.path.exists(commit_file):
+                                                commit_count += 1
+                            except OSError:
+                                pass
+                            
+                            # Determine last commit by max timestamp-like dir name
+                            if commit_dirs:
+                                try:
+                                    last_commit = max(commit_dirs)
+                                except Exception:
+                                    last_commit = commit_dirs[0] if commit_dirs else ""
+                            
+                            branches.append({
+                                'name': branch_name,
+                                'commit_count': commit_count,
+                                'last_commit': last_commit
+                            })
+                            
+                        except OSError as e:
+                            logger.error(f"Failed to read branch directory {branch_path}: {e}")
+                            continue
         except OSError as e:
             logger.error(f"Failed to read mesh directory {mesh_dir}: {e}")
             return []

@@ -173,9 +173,8 @@ class DFM_LoadGeometryOperator(bpy.types.Operator):
         # Clear existing mesh data to avoid array size conflicts
         mesh.clear_geometry()
         
-        # Import new geometry
+        # Import new geometry (update called later in execute)
         mesh.from_pydata(vertices, [], faces)
-        mesh.update()
     
     def _import_uv_layers(self, mesh, mesh_data):
         """
@@ -184,7 +183,10 @@ class DFM_LoadGeometryOperator(bpy.types.Operator):
         Performance optimization:
         - Uses foreach_set for 5-10x faster UV assignment on large meshes
         - Flattens UV coordinates into a single list for batch operation
+        - Uses itertools.chain for efficient flattening
         """
+        from itertools import chain
+        
         # Clear existing UV layers if importing to existing mesh
         while mesh.uv_layers:
             mesh.uv_layers.remove(mesh.uv_layers[0])
@@ -198,7 +200,8 @@ class DFM_LoadGeometryOperator(bpy.types.Operator):
             if len(uv_data) > 0 and len(uv_layer.data) > 0:
                 # Ensure we don't exceed actual UV data length
                 count = min(len(uv_data), len(uv_layer.data))
-                flat_uvs = [coord for i in range(count) for coord in uv_data[i]]
+                # Use itertools.chain for faster flattening
+                flat_uvs = list(chain.from_iterable(uv_data[:count]))
                 uv_layer.data.foreach_set("uv", flat_uvs)
         
         # Mesh update moved to end of import process
@@ -227,9 +230,16 @@ class DFM_LoadGeometryOperator(bpy.types.Operator):
         # Clear existing materials if replacing
         obj.data.materials.clear()
         
-        # Look for material files in the commit directory
-        material_files = [f for f in os.listdir(commit_dir) 
-                        if f.startswith('material_') and f.endswith('.json')]
+        # Look for material files in the commit directory using scandir
+        material_files = []
+        try:
+            with os.scandir(commit_dir) as entries:
+                for entry in entries:
+                    if entry.is_file() and entry.name.startswith('material_') and entry.name.endswith('.json'):
+                        material_files.append(entry.name)
+        except OSError as e:
+            logger.error(f"Failed to scan commit directory {commit_dir}: {e}")
+            return
         
         logger.info(f"Found {len(material_files)} material files in {commit_dir}")
         
