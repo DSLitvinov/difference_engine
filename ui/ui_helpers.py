@@ -329,4 +329,14 @@ def clear_caches():
     from ..classes.material_importer import DFM_MaterialImporter
     DFM_MaterialImporter._image_size_cache.clear()
     
+    # Clear UI lists in all scenes
+    try:
+        for scene in bpy.data.scenes:
+            if hasattr(scene, 'dfm_commit_list'):
+                scene.dfm_commit_list.clear()
+            if hasattr(scene, 'dfm_branch_list'):
+                scene.dfm_branch_list.clear()
+    except Exception as e:
+        logger.debug(f"Could not clear UI lists: {e}")
+    
     logger.info("Cleared all addon caches")
