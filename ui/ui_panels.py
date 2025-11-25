@@ -16,7 +16,7 @@ class DFM_Export_PT_panel(bpy.types.Panel):
     bl_idname = 'DFM_PT_panel_new_version'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'Difference Machine'
+    bl_category = 'Difference Engine'
     bl_label = 'Make commit'
     bl_order = 0
     bl_options = {'DEFAULT_CLOSED'}
@@ -56,7 +56,7 @@ class DFM_History_PT_panel(bpy.types.Panel):
     bl_idname = 'DFM_PT_panel_history'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'Difference Machine'
+    bl_category = 'Difference Engine'
     bl_label = 'Version History'
     bl_order = 1
     bl_options = {'DEFAULT_CLOSED'}
@@ -219,7 +219,7 @@ class DFM_Branches_PT_panel(bpy.types.Panel):
     bl_idname = 'DFM_PT_panel_branches'
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
-    bl_category = 'Difference Machine'
+    bl_category = 'Difference Engine'
     bl_label = 'Branch Management'
     bl_order = 2
     bl_options = {'DEFAULT_CLOSED'}
